@@ -16,13 +16,13 @@ BASEDIR=$TMPDIR/libjna-java-${VERSION}
 mkdir ${BASEDIR}
 
 # retrieve sources from svn
-# svn export https://jna.dev.java.net/svn/jna/tags/${VERSION}/jnalib/ --username guest ${BASEDIR}
-wget --user guest --password "" \
+# svn export https://svn.java.net/svn/jna~svn/tags/${VERSION}/jnalib/ --username guest ${BASEDIR}
+wget --no-check-certificate \
       --directory-prefix=${TMPDIR} \
-      https://jna.dev.java.net/svn/jna/tags/${VERSION}/jnalib/pom.xml \
-      https://jna.dev.java.net/svn/jna/tags/${VERSION}/jnalib/dist/src.zip \
-      https://jna.dev.java.net/svn/jna/tags/${VERSION}/jnalib/src/com/sun/jna/overview.html \
-      https://jna.dev.java.net/svn/jna/tags/${VERSION}/jnalib/src/com/sun/jna/package.html
+      https://svn.java.net/svn/jna~svn/tags/${VERSION}/jnalib/pom.xml \
+      https://svn.java.net/svn/jna~svn/tags/${VERSION}/jnalib/dist/src.zip \
+      https://svn.java.net/svn/jna~svn/tags/${VERSION}/jnalib/src/com/sun/jna/overview.html \
+      https://svn.java.net/svn/jna~svn/tags/${VERSION}/jnalib/src/com/sun/jna/package.html
 
 unzip -d ${BASEDIR} ${TMPDIR}/src.zip
 
