@@ -6,7 +6,7 @@ libjna-java (3.2.7-1) UNRELEASED; urgency=low
   * change SVN URL in debian/repack-source.sh
   * fix debian/repack-source.sh to use the directory given to uscan via
     -destdir
-  * remove debian/.mh in debian/rules
+  * add mh_clean to clean target in debian/rules
 
  -- Jan Dittberner <jandd@debian.org>  Sun, 13 Feb 2011 18:11:51 +0100
 
