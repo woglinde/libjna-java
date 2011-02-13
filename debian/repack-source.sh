@@ -14,6 +14,7 @@ CURDIR=$(pwd)
 TMPDIR=`mktemp -d libjna-tmp.XXXXXX`
 BASEDIR=$TMPDIR/libjna-java-${VERSION}
 mkdir ${BASEDIR}
+TARGET=$(dirname "$3")/libjna-java_${VERSION}.orig.tar.gz
 
 # retrieve sources from svn
 # svn export https://svn.java.net/svn/jna~svn/tags/${VERSION}/jnalib/ --username guest ${BASEDIR}
@@ -37,7 +38,7 @@ mv ${TMPDIR}/*html ${BASEDIR}/src/com/sun/jna/
 mv ${TMPDIR}/*xml ${BASEDIR}/
 
 # Repack
-GZIP=-9 tar -C "$TMPDIR" -czf ../libjna-java_${VERSION}.orig.tar.gz "libjna-java-${VERSION}"
+GZIP=-9 tar -C "$TMPDIR" -czf "${TARGET}" "libjna-java-${VERSION}"
 
 # Clean temporary files
 rm -rf "$TMPDIR"
@@ -46,5 +47,5 @@ rm -f "$FILENAME"
 
 if [ $1 = --upstream-version ] ;
 then
-    uupdate --upstream-version $2 $3
+    uupdate --upstream-version $2 "${TARGET}"
 fi

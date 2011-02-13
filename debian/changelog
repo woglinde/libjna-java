@@ -2,6 +2,8 @@ libjna-java (3.2.4-2) UNRELEASED; urgency=low
 
   * switch debian/watch to new kenai URL
   * change SVN URL in debian/repack-source.sh
+  * fix debian/repack-source.sh to use the directory given to uscan via
+    -destdir
 
  -- Jan Dittberner <jandd@debian.org>  Sun, 13 Feb 2011 18:11:51 +0100
 
