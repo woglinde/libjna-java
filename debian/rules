@@ -22,6 +22,9 @@ override_dh_auto_install:
 override_dh_makeshlibs:
 	# don't call dh_makeshlibs
 
+override_dh_compress:
+	dh_compress -X.java
+
 binary: binary-arch binary-indep
 
 %:
