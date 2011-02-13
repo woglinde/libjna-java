@@ -9,6 +9,7 @@ override_dh_auto_clean:
 		ant -f build.xml clean; \
 	fi
 	rm -f build.number
+	rm -rf debian/.mh
 
 	dh_clean
 
