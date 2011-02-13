@@ -7,6 +7,8 @@ libjna-java (3.2.7-1) UNRELEASED; urgency=low
   * fix debian/repack-source.sh to use the directory given to uscan via
     -destdir
   * add mh_clean to clean target in debian/rules
+  * bump Standards-Version to 3.9.1
+  * bump maven-repo-helper dependency to (>= 1.5~)
 
  -- Jan Dittberner <jandd@debian.org>  Sun, 13 Feb 2011 18:11:51 +0100
 

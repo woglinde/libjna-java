@@ -17,7 +17,6 @@ override_dh_auto_build:
 	ant -f build.xml javadoc
 
 override_dh_auto_install:
-	mh_installpoms -plibjna-java
 	mh_installjar -plibjna-java -l --usj-name=jna pom.xml build/jna.jar
 
 override_dh_makeshlibs:
@@ -26,4 +25,4 @@ override_dh_makeshlibs:
 binary: binary-arch binary-indep
 
 %:
-	dh $@
+	dh $@ --with maven-repo-helper
