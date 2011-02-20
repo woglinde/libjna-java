@@ -1,4 +1,4 @@
-libjna-java (3.2.7-1) UNRELEASED; urgency=low
+libjna-java (3.2.7-1) unstable; urgency=low
 
   * New upstream release (Closes: #602564)
   * refresh patches
@@ -11,7 +11,7 @@ libjna-java (3.2.7-1) UNRELEASED; urgency=low
   * bump maven-repo-helper dependency to (>= 1.5~)
   * don't compress example java files
 
- -- Jan Dittberner <jandd@debian.org>  Sun, 13 Feb 2011 18:11:51 +0100
+ -- Jan Dittberner <jandd@debian.org>  Sun, 20 Feb 2011 15:18:39 +0100
 
 libjna-java (3.2.4-2) unstable; urgency=low
 
