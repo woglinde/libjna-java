@@ -4,10 +4,12 @@ Download: https://jna.dev.java.net/
 Files: *
 Copyright:
  (C) 1998 Sun Microsystems, Inc.
- (C) 2007-2009 Timothy Wall <twalljava@dev.java.net>
+ (C) 2007-2010 Timothy Wall <twalljava@dev.java.net>
  (C) 2007 Thomas Boerkel
  (C) 2007 Wayne Meissner
  (C) 2007 Olivier Chafik
+ (C) 2010 Daniel Doubrovkine
+ (C) 2010 Digital Rapids Corp.
 License: LGPL-2.1+
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Library General Public

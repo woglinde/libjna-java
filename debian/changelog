@@ -1,3 +1,13 @@
+libjna-java (3.2.7-2) unstable; urgency=low
+
+  * Build and install platform.jar too.
+  * Bump Standards-Version to 3.9.2.
+  * Drop dependency on jre.
+  * Update debian/copyright to cover platform code.
+  * Add myself to uploaders.
+
+ -- Andrew Ross <ubuntu@rossfamily.co.uk>  Sun, 22 May 2011 21:19:01 +0100
+
 libjna-java (3.2.7-1) unstable; urgency=low
 
   * New upstream release (Closes: #602564)

@@ -4,3 +4,4 @@
 04-load-native-code-from-fs.patch
 05-support-gnu-kfreebsd.patch
 06-remove-gjdoc-inexistent-options.patch
+07-include-platform-jar.patch
