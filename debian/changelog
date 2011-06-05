@@ -1,3 +1,18 @@
+libjna-java (3.2.7-4) unstable; urgency=low
+
+  * Remove optional build time dependency on openjdk-6-jdk (depend on
+    default-jdk) to fix Debcheck warning.
+  * Install jna-platform.jar with javahelper instead of mavenhelper
+    (Closes: #629081).
+
+ -- Andrew Ross <ubuntu@rossfamily.co.uk>  Fri, 03 Jun 2011 18:13:57 +0100
+
+libjna-java (3.2.7-3) experimental; urgency=low
+
+  * Seach multiarch paths for libraries (Closes: #620122)
+
+ -- Andrew Ross <ubuntu@rossfamily.co.uk>  Wed, 25 May 2011 21:19:02 +0100
+
 libjna-java (3.2.7-2) unstable; urgency=low
 
   * Build and install platform.jar too.

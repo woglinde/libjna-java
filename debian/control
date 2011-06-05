@@ -4,9 +4,9 @@ Priority: optional
 Maintainer: Debian Java maintainers <pkg-java-maintainers@lists.alioth.debian.org>
 Uploaders: Michael Koch <konqueror@gmx.de>, Jan Dittberner <jandd@debian.org>, 
  Ludovic Claude <ludovic.claude@laposte.net>, Andrew Ross <ubuntu@rossfamily.co.uk>
-Build-Depends: debhelper (>= 7.0.50~), default-jdk | openjdk-6-jdk, ant,
+Build-Depends: debhelper (>= 7.0.50~), default-jdk, ant,
  ant-optional, libx11-dev, libxt-dev, libffi-dev, pkg-config,
- maven-repo-helper (>= 1.5~)
+ maven-repo-helper (>= 1.5~), javahelper (>=0.32~)
 Standards-Version: 3.9.2
 Homepage: http://jna.dev.java.net/
 Vcs-Git: git://git.debian.org/pkg-java/libjna-java.git

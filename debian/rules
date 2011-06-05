@@ -21,7 +21,7 @@ override_dh_auto_build:
 # install. using platform.jar is a silly idea in /usr/share/java/ as it's bound to collide
 override_dh_auto_install:
 	mh_installjar -plibjna-java -l --usj-name=jna pom.xml build/jna.jar
-	mh_installjar -plibjna-java -l --usj-name=jna-platform pom.xml build/platform.jar
+	jh_installlibs -plibjna-java build/jna-platform.jar
 
 override_dh_makeshlibs:
 	# don't call dh_makeshlibs
