@@ -1227,14 +1227,64 @@ public class StructureTest extends TestCase {
 
     public void testPointerCTORWithInitializedFields() {
         class TestStructure extends Structure {
-            public byte[] field = new byte[256];
+            public int intField;
+            public byte[] arrayField = new byte[256];
             public TestStructure(Pointer p) {
                 super(p);
+                read(); // Important!
             }
         }
-        Memory p = new Memory(256);
-        Structure s = new TestStructure(p);
+        Memory p = new Memory(260);
+        p.setInt(0, 1);
+        p.setByte(4, (byte)2);
+        p.setByte(5, (byte)3);
+        p.setByte(6, (byte)4);
+        p.setByte(7, (byte)5);
+        TestStructure s = new TestStructure(p);
+
+        assertEquals("Structure primitive field not initialized",
+                     (byte)1, s.intField);
+        assertEquals("Structure primitive array field not initialized",
+                     (byte)2, s.arrayField[0]);
+        assertEquals("Structure primitive array field not initialized",
+                     (byte)3, s.arrayField[1]);
+        assertEquals("Structure primitive array field not initialized",
+                     (byte)4, s.arrayField[2]);
+        assertEquals("Structure primitive array field not initialized",
+                     (byte)5, s.arrayField[3]);
         assertEquals("Wrong structure size", p.size(), s.size());
+    }
+
+
+    public static class TestByReferenceArrayField extends Structure {
+        public TestByReferenceArrayField() { }
+        public TestByReferenceArrayField(Pointer m) {
+            super(m);
+            read(); // Important!
+        }
+
+        public int value1;
+        public ByReference[] array = new ByReference[13];
+        public int value2;
+
+        public static class ByReference extends TestByReferenceArrayField implements Structure.ByReference { }
+    }
+
+    public static void testByReferenceArrayField() {
+        TestByReferenceArrayField.ByReference s = new TestByReferenceArrayField.ByReference();
+        s.value1 = 22;
+        s.array[0] = s;
+        s.value2 = 42;
+        s.write();
+
+        TestByReferenceArrayField s2 =
+            new TestByReferenceArrayField(s.getPointer());
+        assertEquals("value1 not properly read from Pointer", s.value1, s2.value1);
+        assertNotNull("Structure.ByReference array field was not initialized", s2.array);
+        assertEquals("Structure.ByReference array field initialized to incorrect length", 13, s2.array.length);
+        assertNotNull("Structure.ByReference array field element was not initialized", s2.array[0]);
+        assertEquals("Incorrect value for Structure.ByReference array field element", s.array[0].getPointer(), s2.array[0].getPointer());
+        assertEquals("Field 'value2' not properly read from Pointer", s.value2, s2.value2);
     }
 
     public void testEquals() {
@@ -1246,5 +1296,8 @@ public class StructureTest extends TestCase {
         assertFalse("Not equal null", s.equals(null));
         assertFalse("Not equal some other object", s.equals(new Object()));
     }
-
+    public void testStructureSetIterator() {
+        assertNotNull("Indirect test of StructureSet.Iterator",
+                      Structure.busy().toString());
+    }
 }
