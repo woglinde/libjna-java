@@ -3,7 +3,7 @@ Description: fix build.xml to remove nbproject usage as we don't have it.
 
 --- a/build.xml
 +++ b/build.xml
-@@ -647,7 +647,6 @@
+@@ -663,7 +663,6 @@
        <zipfileset src="${dist}/src.zip"/>
        <zipfileset dir="lib" includes="junit.jar,clover.jar" prefix="lib"/>
        <zipfileset dir="." includes=".classpath,.project"/>

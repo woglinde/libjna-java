@@ -1,7 +1,5 @@
-Index: libjna-java-3.2.7/src/com/sun/jna/Platform.java
-===================================================================
---- libjna-java-3.2.7.orig/src/com/sun/jna/Platform.java	2009-07-07 05:41:18.000000000 +0100
-+++ libjna-java-3.2.7/src/com/sun/jna/Platform.java	2011-05-25 23:24:11.725855192 +0100
+--- a/src/com/sun/jna/Platform.java
++++ b/src/com/sun/jna/Platform.java
 @@ -99,4 +99,57 @@
          }
          return Native.POINTER_SIZE == 8;
@@ -60,11 +58,9 @@ Index: libjna-java-3.2.7/src/com/sun/jna/Platform.java
 +        }
 +    }
  }
-Index: libjna-java-3.2.7/src/com/sun/jna/NativeLibrary.java
-===================================================================
---- libjna-java-3.2.7.orig/src/com/sun/jna/NativeLibrary.java	2010-07-19 08:57:18.000000000 +0100
-+++ libjna-java-3.2.7/src/com/sun/jna/NativeLibrary.java	2011-05-25 23:27:45.045855352 +0100
-@@ -618,7 +618,7 @@
+--- a/src/com/sun/jna/NativeLibrary.java
++++ b/src/com/sun/jna/NativeLibrary.java
+@@ -634,7 +634,7 @@
              // 64bit machines, so we have to explicitly search the 64bit one when
              // running a 64bit JVM.
              //
@@ -73,7 +69,7 @@ Index: libjna-java-3.2.7/src/com/sun/jna/NativeLibrary.java
                  // Linux & FreeBSD use /usr/lib32, solaris uses /usr/lib/32
                  archPath = (Platform.isSolaris() ? "/" : "") + Pointer.SIZE * 8;
              }
-@@ -628,11 +628,48 @@
+@@ -644,11 +644,48 @@
                  "/usr/lib",
                  "/lib",
              };
@@ -98,11 +94,11 @@ Index: libjna-java-3.2.7/src/com/sun/jna/NativeLibrary.java
 +                    cpu + "-" + kernel + "-" + libc;
 +
 +                // Assemble path with all possible options
-+                paths = new String[] {
+                 paths = new String[] {
 +                    "/usr/lib/" + multiArchPath,
 +                    "/lib/" + multiArchPath,
-+                    "/usr/lib" + archPath,
-+                    "/lib" + archPath,
+                     "/usr/lib" + archPath,
+                     "/lib" + archPath,
 +                    "/usr/lib",
 +                    "/lib",
 +                };
@@ -114,21 +110,19 @@ Index: libjna-java-3.2.7/src/com/sun/jna/NativeLibrary.java
 +                    cpu + "-" + libc;
 +
 +               // Assemble path with all possible options
-                 paths = new String[] {
++                paths = new String[] {
 +                    "/usr/lib/" + multiArchPath,
 +                    "/lib/" + multiArchPath,
-                     "/usr/lib" + archPath,
-                     "/lib" + archPath,
++                    "/usr/lib" + archPath,
++                    "/lib" + archPath,
 +                    "/usr/lib",
 +                    "/lib",
                  };
              }
              for (int i=0;i < paths.length;i++) {
-Index: libjna-java-3.2.7/build.xml
-===================================================================
---- libjna-java-3.2.7.orig/build.xml	2011-05-25 21:26:05.084188334 +0100
-+++ libjna-java-3.2.7/build.xml	2011-05-25 21:28:42.574188163 +0100
-@@ -72,6 +72,8 @@
+--- a/build.xml
++++ b/build.xml
+@@ -73,6 +73,8 @@
      <echo>${java.vm.name} (${java.vm.vendor}, ${java.vm.version})</echo>
      <echo>java.home=${java.home}</echo>
      <echo>java.library.path=${java.library.path}</echo>

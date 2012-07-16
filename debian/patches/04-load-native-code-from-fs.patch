@@ -3,7 +3,7 @@ Subject: try to load native library from /usr/lib/jni if system
 Author: Jan Dittberner <jandd@debian.org>
 --- a/src/com/sun/jna/Native.java
 +++ b/src/com/sun/jna/Native.java
-@@ -648,6 +648,9 @@
+@@ -662,6 +662,9 @@
      private static void loadNativeLibrary() {
          String libName = "jnidispatch";
          String bootPath = System.getProperty("jna.boot.library.path");

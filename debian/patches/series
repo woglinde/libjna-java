@@ -6,3 +6,4 @@
 06-remove-gjdoc-inexistent-options.patch
 07-include-platform-jar.patch
 08-multiarch-support.patch
+09-javadoc.patch

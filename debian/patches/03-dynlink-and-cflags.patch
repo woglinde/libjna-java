@@ -3,7 +3,7 @@ Description: dynlink and cflags
 
 --- a/build.xml
 +++ b/build.xml
-@@ -393,6 +393,19 @@
+@@ -398,6 +398,19 @@
        <arg value="JNA_JNI_VERSION=${jni.version}"/>
        <arg value="CHECKSUM=${jni.md5}"/>
      </exec>
@@ -23,7 +23,7 @@ Description: dynlink and cflags
      <mkdir dir="${classes}/com/sun/jna/${os.prefix}"/>
      <copy todir="${classes}/com/sun/jna/${os.prefix}">
        <fileset dir="${build.native}"
-@@ -404,15 +417,6 @@
+@@ -409,15 +422,6 @@
        <fileset dir="${build.native}"
                 includes="jnidispatch.dll,libjnidispatch.*"/>
      </copy>

@@ -1,0 +1,13 @@
+Link javadoc to the default-jdk javadoc.
+
+--- a/build.xml
++++ b/build.xml
+@@ -567,7 +567,7 @@
+       <doctitle>JNA API Documentation</doctitle>
+       <header>${header}</header>
+       <bottom>${footer}</bottom>
+-      <link href="http://java.sun.com/j2se/1.4.2/docs/api/"/>
++      <link href="/usr/share/doc/default-jdk-doc/api"/>
+ 
+       <packageset dir="${src}" defaultexcludes="yes">
+         <patternset>
