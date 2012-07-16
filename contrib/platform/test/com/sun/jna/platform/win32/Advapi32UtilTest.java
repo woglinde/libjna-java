@@ -12,12 +12,15 @@
  */
 package com.sun.jna.platform.win32;
 
+import java.util.Map;
 import java.util.TreeMap;
 
 import junit.framework.TestCase;
 
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.Advapi32Util.Account;
+import com.sun.jna.platform.win32.Advapi32Util.EventLogIterator;
+import com.sun.jna.platform.win32.Advapi32Util.EventLogRecord;
 import com.sun.jna.platform.win32.LMAccess.USER_INFO_1;
 import com.sun.jna.platform.win32.WinNT.HANDLEByReference;
 import com.sun.jna.platform.win32.WinNT.PSID;
@@ -181,6 +184,15 @@ public class Advapi32UtilTest extends TestCase {
 		Advapi32Util.registryDeleteKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
 		assertFalse(Advapi32Util.registryKeyExists(WinReg.HKEY_CURRENT_USER, "Software\\JNA"));
 	}
+	
+	public void testRegistryCreateKeyDisposition() {
+		Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
+		Advapi32Util.registryDeleteKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
+		assertTrue(Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA"));
+		assertFalse(Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA"));
+		assertTrue(Advapi32Util.registryKeyExists(WinReg.HKEY_CURRENT_USER, "Software\\JNA"));
+		Advapi32Util.registryDeleteKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
+	}
 
 	public void testRegistryDeleteValue() {
 		Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
@@ -209,6 +221,41 @@ public class Advapi32UtilTest extends TestCase {
 		Advapi32Util.registryDeleteKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");		
 	}
 
+	public void testRegistrySetGetExpandableStringValue() {
+		Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
+		Advapi32Util.registrySetExpandableStringValue(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "StringValue", "Temp is %TEMP%");
+		assertEquals("Temp is %TEMP%", Advapi32Util.registryGetExpandableStringValue(WinReg.HKEY_CURRENT_USER, 
+				"Software\\JNA", "StringValue"));
+		assertTrue(Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "StringValue"));
+		Advapi32Util.registryDeleteKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");		
+	}
+	
+	public void testRegistrySetGetStringArray() {
+		Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
+		String[] dataWritten = { "Hello", "World" };
+		Advapi32Util.registrySetStringArray(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "MultiStringValue", dataWritten);
+		assertTrue(Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "MultiStringValue"));
+		String[] dataRead = Advapi32Util.registryGetStringArray(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "MultiStringValue");
+		assertEquals(dataWritten.length, dataRead.length);
+		for(int i = 0; i < dataRead.length; i++) {
+			assertEquals(dataWritten[i], dataRead[i]);
+		}
+		Advapi32Util.registryDeleteKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");		
+	}
+	
+	public void testRegistrySetGetBinaryValue() {
+		byte[] data = { 0x00, 0x01, 0x02 };
+		Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
+		Advapi32Util.registrySetBinaryValue(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "BinaryValue", data);
+		byte[] read = Advapi32Util.registryGetBinaryValue(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "BinaryValue");
+		assertEquals(data.length, read.length);		
+		for(int i = 0; i < data.length; i++) {
+			assertEquals(data[i], read[i]);
+		}
+		assertTrue(Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "BinaryValue"));
+		Advapi32Util.registryDeleteKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
+	}
+	
 	public void testRegistryGetKeys() {
 		Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
 		Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "Key1");
@@ -223,13 +270,30 @@ public class Advapi32UtilTest extends TestCase {
 	}
 	
 	public void testRegistryGetValues() {
+		String uu = new String("A" + "\u00ea" + "\u00f1" + "\u00fc" + "C");
 		Advapi32Util.registryCreateKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");
-		Advapi32Util.registrySetIntValue(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "FourtyTwo", 42);
-		Advapi32Util.registrySetStringValue(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "42", "FourtyTwo");
+		Advapi32Util.registrySetIntValue(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "FourtyTwo" + uu, 42);
+		Advapi32Util.registrySetStringValue(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "42" + uu, "FourtyTwo" + uu);
+		Advapi32Util.registrySetExpandableStringValue(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "ExpandableString", "%TEMP%");
+		byte[] dataWritten = { 0xD, 0xE, 0xA, 0xD, 0xB, 0xE, 0xE, 0xF };		
+		Advapi32Util.registrySetBinaryValue(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "DeadBeef", dataWritten);
+		String[] stringsWritten = { "Hello", "World", "Hello World", uu };
+		Advapi32Util.registrySetStringArray(WinReg.HKEY_CURRENT_USER, "Software\\JNA", "StringArray", stringsWritten);		
 		TreeMap<String, Object> values = Advapi32Util.registryGetValues(WinReg.HKEY_CURRENT_USER, "Software\\JNA");
-		assertEquals(2, values.keySet().size());
-		assertEquals("FourtyTwo", values.get("42"));
-		assertEquals(42, values.get("FourtyTwo"));
+		assertEquals(5, values.keySet().size());
+		assertEquals("FourtyTwo" + uu, values.get("42" + uu));
+		assertEquals(42, values.get("FourtyTwo" + uu));
+		assertEquals("%TEMP%", values.get("ExpandableString"));
+		byte[] dataRead = (byte[]) values.get("DeadBeef");
+		assertEquals(dataWritten.length, dataRead.length);
+		for(int i = 0; i < dataWritten.length; i++) {
+			assertEquals(dataWritten[i], dataRead[i]);
+		}
+		String[] stringsRead = (String[]) values.get("StringArray");
+		assertEquals(stringsWritten.length, stringsRead.length);
+		for(int i = 0; i < stringsWritten.length; i++) {
+			assertEquals(stringsWritten[i], stringsRead[i]);
+		}
 		Advapi32Util.registryDeleteKey(WinReg.HKEY_CURRENT_USER, "Software", "JNA");						
 	}
 	
@@ -240,5 +304,86 @@ public class Advapi32UtilTest extends TestCase {
         byte[] everyoneBytes = Advapi32Util.convertStringSidToSid(everyoneString);
         assertTrue(Advapi32Util.isWellKnownSid(everyoneBytes, WELL_KNOWN_SID_TYPE.WinWorldSid));		
         assertFalse(Advapi32Util.isWellKnownSid(everyoneBytes, WELL_KNOWN_SID_TYPE.WinAccountAdministratorSid));
+	}
+	
+	public void testEventLogIteratorForwards() {
+		EventLogIterator iter = new EventLogIterator("Application");
+		try {
+			int max = 100;
+			int lastId = 0;
+			while(iter.hasNext()) {
+				EventLogRecord record = iter.next();
+				assertTrue(record.getRecordNumber() > lastId);
+				lastId = record.getRecordNumber();
+				assertNotNull(record.getType().name());
+				assertNotNull(record.getSource());
+				if (record.getRecord().DataLength.intValue() > 0) {
+					assertEquals(record.getData().length, 
+							record.getRecord().DataLength.intValue());
+				} else {
+					assertNull(record.getData());
+				}
+				if (record.getRecord().NumStrings.intValue() > 0) {
+					assertEquals(record.getStrings().length, 
+							record.getRecord().NumStrings.intValue());
+				} else {
+					assertNull(record.getStrings());
+				}
+				
+				if (max-- <= 0) {
+					break; // shorten test
+				}
+				/*
+				System.out.println(record.getRecordNumber()
+						+ ": Event ID: " + record.getEventId()
+						+ ", Event Type: " + record.getType()
+						+ ", Event Source: " + record.getSource());
+						*/
+			}
+		} finally {
+			iter.close();
+		}
+	}
+	
+	public void testEventLogIteratorBackwards() {
+		EventLogIterator iter = new EventLogIterator(null, 
+				"Application", WinNT.EVENTLOG_BACKWARDS_READ);
+		try {
+			int max = 100;
+			int lastId = -1;
+			while(iter.hasNext()) {
+				EventLogRecord record = iter.next();
+				/*
+				System.out.println(record.getRecordNumber()
+						+ ": Event ID: " + record.getEventId()
+						+ ", Event Type: " + record.getType()
+						+ ", Event Source: " + record.getSource());
+						*/
+				assertTrue(record.getRecordNumber() < lastId || lastId == -1);
+				lastId = record.getRecordNumber();
+				if (max-- <= 0) {
+					break; // shorten test
+				}
+			}
+		} finally {
+			iter.close();
+		}
+	}
+	
+	public void testGetEnvironmentBlock() {
+		String expected = "KEY=value\0"
+			+ "KEY_EMPTY=\0" 
+			+ "KEY_NUMBER=2\0"
+			+ "\0";
+		
+		// Order is important to kept checking result simple
+		Map<String, String> mockEnvironment = new TreeMap<String, String>();
+		mockEnvironment.put("KEY", "value");
+		mockEnvironment.put("KEY_EMPTY", "");
+		mockEnvironment.put("KEY_NUMBER", "2");
+		mockEnvironment.put("KEY_NULL", null);		
+		
+		String block = Advapi32Util.getEnvironmentBlock(mockEnvironment);
+		assertEquals(expected, block);
 	}
 }

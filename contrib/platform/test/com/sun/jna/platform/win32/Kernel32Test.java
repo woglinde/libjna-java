@@ -11,6 +11,11 @@
  * Lesser General Public License for more details.  
  */
 package com.sun.jna.platform.win32;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -24,6 +29,7 @@ import com.sun.jna.platform.win32.WinBase.SYSTEM_INFO;
 import com.sun.jna.platform.win32.WinDef.DWORD;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
+import com.sun.jna.platform.win32.WinNT.HANDLEByReference;
 import com.sun.jna.platform.win32.WinNT.LARGE_INTEGER;
 import com.sun.jna.platform.win32.WinNT.OSVERSIONINFO;
 import com.sun.jna.platform.win32.WinNT.OSVERSIONINFOEX;
@@ -177,6 +183,19 @@ public class Kernel32Test extends TestCase {
     	assertTrue(Kernel32.INSTANCE.GetTempPath(new DWORD(WinDef.MAX_PATH), buffer).intValue() > 0);    	
     }
     
+	public void testGetTickCount() throws InterruptedException {
+		// Tick count rolls over every 49.7 days, so to safeguard from
+		// roll-over, we will get two time spans. At least one should
+		// yield a positive.
+		int tick1 = Kernel32.INSTANCE.GetTickCount();
+		Thread.sleep(10);
+		int tick2 = Kernel32.INSTANCE.GetTickCount();
+		Thread.sleep(10);
+		int tick3 = Kernel32.INSTANCE.GetTickCount();
+
+		assertTrue(tick2 > tick1 || tick3 > tick2);
+	}
+    
     public void testGetVersion() {
     	DWORD version = Kernel32.INSTANCE.GetVersion();
     	assertTrue(version.getHigh().intValue() != 0);
@@ -258,5 +277,75 @@ public class Kernel32Test extends TestCase {
     			lpFreeBytesAvailable, lpTotalNumberOfBytes, lpTotalNumberOfFreeBytes));
     	assertTrue(lpTotalNumberOfFreeBytes.getValue() > 0);
     	assertTrue(lpTotalNumberOfFreeBytes.getValue() < lpTotalNumberOfBytes.getValue());
+    }
+    
+    public void testDeleteFile() {
+    	String filename = Kernel32Util.getTempPath() + "\\FileDoesNotExist.jna";
+    	assertFalse(Kernel32.INSTANCE.DeleteFile(filename));
+    	assertEquals(W32Errors.ERROR_FILE_NOT_FOUND, Kernel32.INSTANCE.GetLastError());
+    }
+    
+    public void testReadFile() throws IOException {
+    	String expected = "jna - testReadFile";
+    	File tmp = File.createTempFile("testReadFile", "jna");
+    	tmp.deleteOnExit();
+    	
+    	FileWriter fw = new FileWriter(tmp);
+    	fw.append(expected);
+    	fw.close();
+    	
+    	HANDLE hFile = Kernel32.INSTANCE.CreateFile(tmp.getAbsolutePath(), WinNT.GENERIC_READ, WinNT.FILE_SHARE_READ,
+    			new WinBase.SECURITY_ATTRIBUTES(), WinNT.OPEN_EXISTING, WinNT.FILE_ATTRIBUTE_NORMAL, null);
+    	assertFalse(hFile == WinBase.INVALID_HANDLE_VALUE);
+    	
+    	ByteBuffer b = ByteBuffer.allocate(2048);
+    	IntByReference lpNumberOfBytesRead = new IntByReference(0);
+    	assertTrue(Kernel32.INSTANCE.ReadFile(hFile, b, b.capacity(), lpNumberOfBytesRead, null));
+    	assertEquals(expected.length(), lpNumberOfBytesRead.getValue());
+    	assertEquals(expected, Native.toString(b.array()));
+    	
+    	assertTrue(Kernel32.INSTANCE.CloseHandle(hFile));    	
+    }
+    
+    public void testSetHandleInformation() throws IOException {
+    	File tmp = File.createTempFile("testSetHandleInformation", "jna");
+    	tmp.deleteOnExit();
+
+    	HANDLE hFile = Kernel32.INSTANCE.CreateFile(tmp.getAbsolutePath(), WinNT.GENERIC_READ, WinNT.FILE_SHARE_READ,
+    			new WinBase.SECURITY_ATTRIBUTES(), WinNT.OPEN_EXISTING, WinNT.FILE_ATTRIBUTE_NORMAL, null);
+    	assertFalse(hFile == WinBase.INVALID_HANDLE_VALUE);
+    	
+    	assertTrue(Kernel32.INSTANCE.SetHandleInformation(hFile, WinBase.HANDLE_FLAG_PROTECT_FROM_CLOSE, 0));
+    	assertTrue(Kernel32.INSTANCE.CloseHandle(hFile));
+    }
+    
+    public void testCreatePipe() {
+    	HANDLEByReference hReadPipe = new HANDLEByReference();
+    	HANDLEByReference hWritePipe = new HANDLEByReference();
+    	
+    	assertTrue(Kernel32.INSTANCE.CreatePipe(hReadPipe, hWritePipe, null, 0));
+    	assertTrue(Kernel32.INSTANCE.CloseHandle(hReadPipe.getValue()));
+    	assertTrue(Kernel32.INSTANCE.CloseHandle(hWritePipe.getValue()));
+    }
+    
+    public void testGetExitCodeProcess() {
+    	IntByReference lpExitCode = new IntByReference(0);
+    	assertTrue(Kernel32.INSTANCE.GetExitCodeProcess(Kernel32.INSTANCE.GetCurrentProcess(), lpExitCode));
+    	assertEquals(WinBase.STILL_ACTIVE, lpExitCode.getValue());
+    }
+    
+    public void testTerminateProcess() throws IOException {
+    	File tmp = File.createTempFile("testTerminateProcess", "jna");
+    	tmp.deleteOnExit();
+    	HANDLE hFile = Kernel32.INSTANCE.CreateFile(tmp.getAbsolutePath(), WinNT.GENERIC_READ, WinNT.FILE_SHARE_READ,
+    			new WinBase.SECURITY_ATTRIBUTES(), WinNT.OPEN_EXISTING, WinNT.FILE_ATTRIBUTE_NORMAL, null);
+    	
+    	assertFalse(Kernel32.INSTANCE.TerminateProcess(hFile, 1));
+    	assertEquals(W32Errors.ERROR_INVALID_HANDLE, Kernel32.INSTANCE.GetLastError());
+    	assertTrue(Kernel32.INSTANCE.CloseHandle(hFile));
+    }
+    
+    public void testGetFileAttributes() {
+    	assertTrue(WinBase.INVALID_FILE_ATTRIBUTES != Kernel32.INSTANCE.GetFileAttributes("."));    	
     }
 }
