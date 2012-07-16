@@ -94,6 +94,12 @@ public abstract class Kernel32Util {
     	return Native.toString(buffer);
 	}
 	
+	public static void deleteFile(String filename) {
+    	if (! Kernel32.INSTANCE.DeleteFile(filename)) {
+    		throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+    	}
+	}
+	
 	/**
 	 * Returns valid drives in the system.
 	 * @return
@@ -124,4 +130,19 @@ public abstract class Kernel32Util {
     	}
     	return drives.toArray(new String[0]);
 	}	
+	
+	/**
+	 * Retrieves file system attributes for a specified file or directory.
+	 * @param fileName
+	 * 	The name of the file or directory.
+	 * @return
+	 *  The attributes of the specified file or directory.
+	 */
+	public static int getFileAttributes(String fileName) {
+		int fileAttributes = Kernel32.INSTANCE.GetFileAttributes(fileName);
+		if (fileAttributes == WinBase.INVALID_FILE_ATTRIBUTES) {
+			throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+		}
+		return fileAttributes;
+	}
 }

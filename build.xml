@@ -22,6 +22,7 @@
   <property name="dynlink.native" value="false"/>
   <property name="native" location="native"/>
   <property name="src" location="src"/>
+  <property name="platform.src" location="contrib/platform/src"/>
   <property name="contrib" location="contrib"/>
   <property name="dist" location="dist"/>
   <property name="test.src" location="test"/>
@@ -34,17 +35,17 @@
   <buildnumber/>
   <!-- JNA library release version -->            
   <property name="jna.major" value="3"/>
-  <property name="jna.minor" value="2"/>
-  <property name="jna.revision" value="7"/>
+  <property name="jna.minor" value="3"/>
+  <property name="jna.revision" value="0"/>
   <property name="jna.build" value="${build.number}"/>
   <property name="jna.version" value="${jna.major}.${jna.minor}.${jna.revision}"/>
   <!-- jnidispatch library release version -->
   <property name="jni.major" value="3"/>
-  <property name="jni.minor" value="2"/>
-  <property name="jni.revision" value="2"/>
+  <property name="jni.minor" value="3"/>
+  <property name="jni.revision" value="0"/>
   <property name="jni.build" value="${build.number}"/>
   <property name="jni.version" value="${jni.major}.${jni.minor}.${jni.revision}"/>
-  <property name="jni.md5" value="c870290c36c8d3fdf85db7c782febc3f"/>
+  <property name="jni.md5" value="4c69bcf40b30785215211b5a5dad211e"/>
   <property name="spec.title" value="Java Native Access (JNA)"/>
   <property name="spec.vendor" value="${vendor}"/>
   <property name="spec.version" value="${jna.major}"/>
@@ -139,7 +140,10 @@
     <condition property="jdk.home" value="${java.home}/..">
       <available file="${java.home}/../include"/>
     </condition>
-    <fail unless="jdk.home" message="Can't find JNI headers"/>
+    <condition property="jdk.home" value="/System/Library/Frameworks/JavaVM.framework/Home">
+      <available file="/System/Library/Frameworks/JavaVM.framework/Headers"/>
+    </condition>
+    <fail unless="jdk.home" message="Can't find JNI headers (java.home=${java.home})"/>
     <condition property="libjsig"
                value="${java.home}/lib/${jre.arch}/libjsig.so" else="">
       <available file="${java.home}/lib/${jre.arch}/libjsig.so"/>
@@ -187,6 +191,7 @@
            source="${compatibility}"
            target="${compatibility}"
            destdir="${classes}" 
+           includeantruntime="false"
            deprecation="on" debug="${debug}">
       <src path="${src}"/>
     </javac>
@@ -421,6 +426,7 @@
            source="${test.compatibility}"
            target="${test.compatibility}"
            destdir="${test.classes}" 
+           includeantruntime="false"
            deprecation="on" debug="${debug}">
       <src path="${test.src}"/>
     </javac>
@@ -491,9 +497,6 @@
         </fileset>
       </batchtest>
     </junit>
-    <subant target="test">
-      <fileset dir="${contrib}" includes="platform/build.xml"/>
-    </subant>
     <junitreport todir="${results.junit}">
       <fileset dir="${results.junit}">
         <include name="TEST-*.xml"/>
@@ -501,6 +504,9 @@
       <report todir="${reports.junit}"/>
     </junitreport>
     <echo>View test report in file://${reports.junit}/index.html</echo>
+    <subant target="test">
+      <fileset dir="${contrib}" includes="platform/build.xml"/>
+    </subant>
     <fail if="testfailure" unless="clover">One or more tests failed</fail>
   </target>
 
@@ -526,6 +532,14 @@
   </target>
 
   <target name="javadoc" depends="-setup">
+    <path id="javadoc.src.path">
+      <path refid="src.path"/>
+      <pathelement location="${platform.src}"/>
+    </path>
+    <path id="javadoc.compile.path">
+      <path refid="compile.path"/>
+      <pathelement location="${classes}"/>
+    </path>
     <property name="header"
               value="&lt;b&gt;JNA API&lt;/&gt;&lt;font size=&quot;-1&quot;&gt; ${jna.version}&lt;/font&gt;"/>
     <property name="footer"
@@ -534,10 +548,10 @@
     <mkdir dir="${javadoc}"/>
     <javadoc package="true"
              windowtitle="JNA API"
-             sourcepathref="src.path"
-             classpathref="compile.path"
+             sourcepathref="javadoc.src.path"
+             classpathref="javadoc.compile.path"
              maxmemory="256m"
-             packagenames="com.sun.jna,com.sun.jna.ptr,com.sun.jna.types,com.sun.jna.platform,com.sun.jna.platform.win32,com.sun.jna.exmaples.unix"
+             packagenames="com.sun.jna,com.sun.jna.ptr,com.sun.jna.types,com.sun.jna.platform,com.sun.jna.platform.win32"
              overview="${src}/com/sun/jna/overview.html"
              destdir="${javadoc}">
       <!-- stylesheetfile="${stylesheet}" -->
@@ -551,15 +565,18 @@
           <include name="com/sun/jna/**/*"/>
         </patternset>
       </packageset>
+      <packageset dir="${platform.src}" defaultexcludes="yes">
+        <patternset>
+          <include name="com/sun/jna/platform/**/*"/>
+        </patternset>
+      </packageset>
 
       <group title="Java Native Access" packages="com.sun.jna,com.sun.jna.ptr,com.sun.jna.types,com.sun.jna.win32"/>
-      <group title="Platform Specific" packages="com.sun.jna.platform"/>
+      <group title="Platform Utilities" packages="com.sun.jna.platform,com.sun.jna.platform.dnd"/>
+      <group title="Platform Specific" packages="com.sun.jna.platform.*"/>
     	
       <arg value="-notimestamp"/>
     </javadoc>
-    <subant target="javadoc">
-      <fileset dir="${contrib}" includes="platform/build.xml"/>
-    </subant>	
   </target>
 
   <target name="dist" depends="jar,contrib-jars,compile-tests,native,javadoc"
@@ -632,11 +649,10 @@
     </copy>
     <zip zipfile="${dist}/doc.zip">
       <zipfileset dir="${javadoc}" prefix="javadoc"/>
-      <zipfileset dir="${contrib}/platform/dist/javadoc" prefix="platform/javadoc"/>
     </zip>
     <!-- JNA sources only, for use in Linux build from source/shared libffi -->
     <zip zipfile="${dist}/src.zip">
-      <zipfileset dir="." includes="build.xml,LICENSE.txt"/>
+      <zipfileset dir="." includes="build.xml,pom.xml,LICENSE.txt"/>
       <zipfileset dir="${src}" includes="**/*.java" prefix="src"/>
       <zipfileset dir="${test.src}" includes="**/*.java" prefix="test"/>
       <zipfileset dir="${native}" excludes="libffi,libffi/**/*,build,build/**/*" prefix="native"/>
@@ -653,6 +669,7 @@
     <!-- Sources package as required by maven -->
     <zip zipfile="${dist}/src-mvn.zip">
       <zipfileset dir="${src}" includes="**/*.java,**/*.html,**/*.png"/>
+      <zipfileset dir="${contrib}/platform" includes="**/*.java"/>
     </zip>
   </target>
 

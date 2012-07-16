@@ -43,7 +43,7 @@ public interface WinNT extends StdCallLibrary {
 	public static final int WRITE_DAC = 0x00040000;
 	public static final int WRITE_OWNER = 0x00080000;
 	public static final int SYNCHRONIZE = 0x00100000;
-
+	
 	public static final int STANDARD_RIGHTS_REQUIRED = 0x000F0000;
 
 	public static final int STANDARD_RIGHTS_READ = READ_CONTROL;
@@ -209,6 +209,38 @@ public interface WinNT extends StdCallLibrary {
 	}
 	
 	/**
+	 * The TOKEN_TYPE enumeration type contains values that differentiate between
+	 * a primary token and an impersonation token.
+	 */
+	public abstract class TOKEN_TYPE {
+		 public static final int TokenPrimary = 1;
+		 public static final int TokenImpersonation = 2;
+	}
+	
+	/**
+	 * The LUID_AND_ATTRIBUTES structure represents a locally unique identifier (LUID) and its attributes.
+	 */
+	public static class LUID_AND_ATTRIBUTES extends Structure {
+		/**
+		 * Specifies an LUID value.
+		 */
+		public LUID  Luid;
+		
+		/**
+		 * Specifies attributes of the LUID. This value contains up to 32 one-bit flags.
+		 * Its meaning is dependent on the definition and use of the LUID.
+		 */
+		public DWORD Attributes;
+		
+		public LUID_AND_ATTRIBUTES() { }
+		
+		public LUID_AND_ATTRIBUTES(LUID luid, DWORD attributes) {
+			this.Luid = luid;
+			this.Attributes = attributes;
+		}
+	}
+	
+	/**
 	 * The SID_AND_ATTRIBUTES structure represents a security identifier (SID) and its 
 	 * attributes. SIDs are used to uniquely identify users or groups.
 	 */
@@ -241,6 +273,10 @@ public interface WinNT extends StdCallLibrary {
 	public static class TOKEN_OWNER extends Structure {
 		public TOKEN_OWNER() {
 			super();
+		}
+		
+		public TOKEN_OWNER(int size) {
+			super(new Memory(size));
 		}
 
 		public TOKEN_OWNER(Pointer memory) {
@@ -373,6 +409,30 @@ public interface WinNT extends StdCallLibrary {
 			return (SID_AND_ATTRIBUTES[]) Group0.toArray(GroupCount);
 		}
 	}
+	
+	/**
+	 * The TOKEN_PRIVILEGES structure contains information about a set of privileges for an access token.
+	 */
+	public static class TOKEN_PRIVILEGES extends Structure {
+		/**
+		 * This must be set to the number of entries in the Privileges array.
+		 */
+		public DWORD PrivilegeCount;
+		
+		/**
+		 * Specifies an array of LUID_AND_ATTRIBUTES structures.
+		 * Each structure contains the LUID and attributes of a privilege.
+		 */
+		public LUID_AND_ATTRIBUTES Privileges[];
+		
+		/**
+		 * @param nbOfPrivileges Desired size of the Privileges array
+		 */
+		public TOKEN_PRIVILEGES(int nbOfPrivileges) {
+			PrivilegeCount = new DWORD(nbOfPrivileges);
+			Privileges = new LUID_AND_ATTRIBUTES[nbOfPrivileges];
+		}
+	}
 
 	/**
 	 * The SID_NAME_USE enumeration type contains values that specify the type of a security identifier (SID).
@@ -439,14 +499,21 @@ public interface WinNT extends StdCallLibrary {
     public static final int FILE_FLAG_OPEN_REPARSE_POINT =   0x00200000;
     public static final int FILE_FLAG_OPEN_NO_RECALL =       0x00100000;
 
-    public static final int GENERIC_WRITE = 0x40000000;
-    
-    public static class SECURITY_ATTRIBUTES extends Structure {
-        public final int nLength = size();
-        public Pointer lpSecurityDescriptor;
-        public boolean bInheritHandle;
-    }	
-    
+	//
+	//  These are the generic rights.
+	//
+
+	public static final int GENERIC_READ		= 0x80000000;
+	public static final int GENERIC_WRITE		= 0x40000000;
+	public static final int GENERIC_EXECUTE		= 0x20000000;
+	public static final int GENERIC_ALL			= 0x10000000;
+	
+	//
+	// AccessSystemAcl access type
+	//
+
+	public static final int ACCESS_SYSTEM_SECURITY = 0x01000000;
+        
     public static final int PAGE_READONLY = 0x02;
     public static final int PAGE_READWRITE = 0x04;
     public static final int PAGE_WRITECOPY = 0x08;
@@ -780,8 +847,8 @@ public interface WinNT extends StdCallLibrary {
 	 * that generated it until the system is restarted. 
 	 */
 	public static class LUID extends Structure {
-		int LowPart;
-		int HighPart;
+		public int LowPart;
+		public int HighPart;
 	}
 	
 	/**
@@ -1385,4 +1452,206 @@ public interface WinNT extends StdCallLibrary {
     public static final int VER_PLATFORM_WIN32s = 0;
     public static final int VER_PLATFORM_WIN32_WINDOWS = 1;
     public static final int VER_PLATFORM_WIN32_NT = 2;
+    
+    /**
+     * Read the records sequentially. If this is the first read operation, 
+     * the EVENTLOG_FORWARDS_READ EVENTLOG_BACKWARDS_READ flags determines which 
+     * record is read first.
+     */
+    public static final int EVENTLOG_SEQUENTIAL_READ = 0x0001;
+	/**
+	 * Begin reading from the record specified in the dwRecordOffset parameter. 
+	 * This option may not work with large log files if the function cannot determine the log file's size. 
+	 * For details, see Knowledge Base article, 177199.
+	 */
+	public static final int EVENTLOG_SEEK_READ = 0x0002;
+	/**
+	 * The log is read in chronological order (oldest to newest). The default.
+	 */
+	public static final int EVENTLOG_FORWARDS_READ = 0x0004;
+	/**
+	 * The log is read in reverse chronological order (newest to oldest). 
+	 */
+	public static final int EVENTLOG_BACKWARDS_READ = 0x0008;
+
+	/**
+	 * Information event
+	 */
+	public static final int EVENTLOG_SUCCESS = 0x0000;
+	/**
+	 * Error event
+	 */
+	public static final int EVENTLOG_ERROR_TYPE = 0x0001;
+	/**
+	 * Warning event
+	 */
+	public static final int EVENTLOG_WARNING_TYPE = 0x0002;
+	/**
+	 * Information event
+	 */
+	public static final int EVENTLOG_INFORMATION_TYPE = 0x0004;
+	/**
+	 * Success Audit event
+	 */
+	public static final int EVENTLOG_AUDIT_SUCCESS = 0x0008;
+	/**
+	 * Failure Audit event
+	 */
+	public static final int EVENTLOG_AUDIT_FAILURE = 0x0010;
+	
+	/**
+	 * The EVENTLOGRECORD structure contains information about an event record returned by the 
+	 * ReadEventLog function.
+	 */
+	public static class EVENTLOGRECORD extends Structure {
+		
+		/**
+		 * Size of this event record, in bytes. Note that this value is stored at both ends
+		 * of the entry to ease moving forward or backward through the log. The length includes 
+		 * any pad bytes inserted at the end of the record for DWORD alignment. 
+		 */
+		public DWORD Length;
+		/**
+		 * Reserved.
+		 */
+		public DWORD Reserved;
+		/**
+		 * Record number of the record. This value can be used with the EVENTLOG_SEEK_READ flag in
+		 * the ReadEventLog function to begin reading at a specified record.
+		 */
+		public DWORD RecordNumber;
+		/**
+		 * Time at which this entry was submitted. This time is measured in the number of seconds 
+		 * elapsed since 00:00:00 January 1, 1970, Universal Coordinated Time. 
+		 */
+		public DWORD TimeGenerated;
+		/**
+		 * Time at which this entry was received by the service to be written to the log. 
+		 * This time is measured in the number of seconds elapsed since 00:00:00 January 1,
+		 * 1970, Universal Coordinated Time. 
+		 */
+		public DWORD TimeWritten;
+		/**
+		 * Event identifier. The value is specific to the event source for the event, and is used
+		 * with source name to locate a description string in the message file for the event source. 
+		 */
+		public DWORD EventID;
+		/**
+		 * Type of event.
+		 */
+		public WORD EventType;
+		/**
+		 * Number of strings present in the log (at the position indicated by StringOffset). 
+		 * These strings are merged into the message before it is displayed to the user. 
+		 */
+		public WORD NumStrings;
+		/**
+		 * Category for this event. The meaning of this value depends on the event source.
+		 */
+		public WORD EventCategory;
+		/**
+		 * Reserved.
+		 */
+		public WORD ReservedFlags;
+		/**
+		 * Reserved.
+		 */
+		public DWORD ClosingRecordNumber;
+		/**
+		 * Offset of the description strings within this event log record. 
+		 */
+		public DWORD StringOffset;
+		/**
+		 * Size of the UserSid member, in bytes. This value can be zero if no security identifier was provided. 
+		 */
+		public DWORD UserSidLength;
+		/**
+		 * Offset of the security identifier (SID) within this event log record. 
+		 * To obtain the user name for this SID, use the LookupAccountSid function. 
+		 */
+		public DWORD UserSidOffset;
+		/**
+		 * Size of the event-specific data (at the position indicated by DataOffset), in bytes. 
+		 */
+		public DWORD DataLength;
+		/**
+		 * Offset of the event-specific information within this event log record, in bytes. 
+		 * This information could be something specific (a disk driver might log the number 
+		 * of retries, for example), followed by binary information specific to the event 
+		 * being logged and to the source that generated the entry. 
+		 */
+		public DWORD DataOffset;
+		
+		public EVENTLOGRECORD() {
+			
+		}
+		
+		public EVENTLOGRECORD(Pointer p) {
+			super(p);
+			read();
+		}
+	};
+	
+	//
+	// Service Types (Bit Mask)
+	//
+	public static final int SERVICE_KERNEL_DRIVER		= 0x00000001;
+	public static final int SERVICE_FILE_SYSTEM_DRIVER	= 0x00000002;
+	public static final int SERVICE_ADAPTER				= 0x00000004;
+	public static final int SERVICE_RECOGNIZER_DRIVER	= 0x00000008;
+	
+	public static final int SERVICE_DRIVER = 
+		(SERVICE_KERNEL_DRIVER | SERVICE_FILE_SYSTEM_DRIVER | SERVICE_RECOGNIZER_DRIVER);
+	
+	public static final int SERVICE_WIN32_OWN_PROCESS	= 0x00000010;
+	public static final int SERVICE_WIN32_SHARE_PROCESS	= 0x00000020;
+	
+	public static final int SERVICE_WIN32 = 
+		(SERVICE_WIN32_OWN_PROCESS | SERVICE_WIN32_SHARE_PROCESS);
+	
+	public static final int SERVICE_INTERACTIVE_PROCESS = 0x00000100;
+	
+	public static final int SERVICE_TYPE_ALL = 
+		(SERVICE_WIN32 | SERVICE_ADAPTER | SERVICE_DRIVER | SERVICE_INTERACTIVE_PROCESS);
+	
+	public static final int STATUS_PENDING = 0x00000103;
+	
+	// Privilege Constants
+	public static final String SE_CREATE_TOKEN_NAME = "SeCreateTokenPrivilege";
+	public static final String SE_ASSIGNPRIMARYTOKEN_NAME = "SeAssignPrimaryTokenPrivilege";
+	public static final String SE_LOCK_MEMORY_NAME = "SeLockMemoryPrivilege";
+	public static final String SE_INCREASE_QUOTA_NAME = "SeIncreaseQuotaPrivilege";
+	public static final String SE_UNSOLICITED_INPUT_NAME = "SeUnsolicitedInputPrivilege";
+	public static final String SE_MACHINE_ACCOUNT_NAME = "SeMachineAccountPrivilege";
+	public static final String SE_TCB_NAME = "SeTcbPrivilege";
+	public static final String SE_SECURITY_NAME = "SeSecurityPrivilege";
+	public static final String SE_TAKE_OWNERSHIP_NAME = "SeTakeOwnershipPrivilege";
+	public static final String SE_LOAD_DRIVER_NAME = "SeLoadDriverPrivilege";
+	public static final String SE_SYSTEM_PROFILE_NAME = "SeSystemProfilePrivilege";
+	public static final String SE_SYSTEMTIME_NAME = "SeSystemtimePrivilege";
+	public static final String SE_PROF_SINGLE_PROCESS_NAME = "SeProfileSingleProcessPrivilege";
+	public static final String SE_INC_BASE_PRIORITY_NAME = "SeIncreaseBasePriorityPrivilege";
+	public static final String SE_CREATE_PAGEFILE_NAME = "SeCreatePagefilePrivilege";
+	public static final String SE_CREATE_PERMANENT_NAME = "SeCreatePermanentPrivilege";
+	public static final String SE_BACKUP_NAME = "SeBackupPrivilege";
+	public static final String SE_RESTORE_NAME = "SeRestorePrivilege";
+	public static final String SE_SHUTDOWN_NAME = "SeShutdownPrivilege";
+	public static final String SE_DEBUG_NAME = "SeDebugPrivilege";
+	public static final String SE_AUDIT_NAME = "SeAuditPrivilege";
+	public static final String SE_SYSTEM_ENVIRONMENT_NAME = "SeSystemEnvironmentPrivilege";
+	public static final String SE_CHANGE_NOTIFY_NAME = "SeChangeNotifyPrivilege";
+	public static final String SE_REMOTE_SHUTDOWN_NAME = "SeRemoteShutdownPrivilege";
+	public static final String SE_UNDOCK_NAME = "SeUndockPrivilege";
+	public static final String SE_SYNC_AGENT_NAME = "SeSyncAgentPrivilege";
+	public static final String SE_ENABLE_DELEGATION_NAME = "SeEnableDelegationPrivilege";
+	public static final String SE_MANAGE_VOLUME_NAME = "SeManageVolumePrivilege";
+	public static final String SE_IMPERSONATE_NAME = "SeImpersonatePrivilege";
+	public static final String SE_CREATE_GLOBAL_NAME = "SeCreateGlobalPrivilege";
+
+	public static final int SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001;
+	public static final int SE_PRIVILEGE_ENABLED = 0x00000002;
+	public static final int SE_PRIVILEGE_REMOVED = 0X00000004;
+	public static final int SE_PRIVILEGE_USED_FOR_ACCESS = 0x80000000;
+
+
 }

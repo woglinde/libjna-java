@@ -11,6 +11,7 @@
 package com.sun.jna;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -37,7 +38,7 @@ import java.util.WeakHashMap;
  */
 public class Memory extends Pointer {
 
-    private static Map buffers = new WeakHashMap();
+    private static Map buffers = Collections.synchronizedMap(new WeakHashMap());
 
     protected long size; // Size of the malloc'ed space
 
@@ -133,7 +134,13 @@ public class Memory extends Pointer {
         throw new IllegalArgumentException("Byte boundary must be a power of two");
     }
 
+    /** Properly dispose of native memory when this object is GC'd. */
     protected void finalize() {
+        dispose();
+    }
+
+    /** Free the native memory and set peer to zero */
+    protected synchronized void dispose() {
         free(peer);
         peer = 0;
     }
@@ -192,7 +199,7 @@ public class Memory extends Pointer {
      * @see Pointer#read(long,byte[],int,int) 
      */
     public void read(long bOff, byte[] buf, int index, int length) {
-        boundsCheck(bOff, length * 1);
+        boundsCheck(bOff, length * 1L);
         super.read(bOff, buf, index, length);
     }
 
@@ -206,7 +213,7 @@ public class Memory extends Pointer {
      * @see Pointer#read(long,short[],int,int)
      */
     public void read(long bOff, short[] buf, int index, int length) {
-        boundsCheck(bOff, length * 2);
+        boundsCheck(bOff, length * 2L);
         super.read(bOff, buf, index, length);
     }
 
@@ -220,7 +227,7 @@ public class Memory extends Pointer {
      * @see Pointer#read(long,char[],int,int) 
      */
     public void read(long bOff, char[] buf, int index, int length) {
-        boundsCheck(bOff, length * 2);
+        boundsCheck(bOff, length * 2L);
         super.read(bOff, buf, index, length);
     }
 
@@ -234,7 +241,7 @@ public class Memory extends Pointer {
      * @see Pointer#read(long,int[],int,int)
      */
     public void read(long bOff, int[] buf, int index, int length) {
-        boundsCheck(bOff, length * 4);
+        boundsCheck(bOff, length * 4L);
         super.read(bOff, buf, index, length);
     }
 
@@ -248,7 +255,7 @@ public class Memory extends Pointer {
      * @see Pointer#read(long,long[],int,int) 
      */
     public void read(long bOff, long[] buf, int index, int length) {
-        boundsCheck(bOff, length * 8);
+        boundsCheck(bOff, length * 8L);
         super.read(bOff, buf, index, length);
     }
 
@@ -262,7 +269,7 @@ public class Memory extends Pointer {
      * @see Pointer#read(long,float[],int,int) 
      */
     public void read(long bOff, float[] buf, int index, int length) {
-        boundsCheck(bOff, length * 4);
+        boundsCheck(bOff, length * 4L);
         super.read(bOff, buf, index, length);
     }
 
@@ -277,7 +284,7 @@ public class Memory extends Pointer {
      */
     public void read(long bOff, double[] buf, int index, int length) 
     {
-        boundsCheck(bOff, length * 8);
+        boundsCheck(bOff, length * 8L);
         super.read(bOff, buf, index, length);
     }
 
@@ -297,7 +304,7 @@ public class Memory extends Pointer {
      * @see Pointer#write(long,byte[],int,int) 
      */
     public void write(long bOff, byte[] buf, int index, int length) {
-        boundsCheck(bOff, length * 1);
+        boundsCheck(bOff, length * 1L);
         super.write(bOff, buf, index, length);
     }
 
@@ -311,7 +318,7 @@ public class Memory extends Pointer {
      * @see Pointer#write(long,short[],int,int)
      */
     public void write(long bOff, short[] buf, int index, int length) {
-        boundsCheck(bOff, length * 2);
+        boundsCheck(bOff, length * 2L);
         super.write(bOff, buf, index, length);
     }
 
@@ -325,7 +332,7 @@ public class Memory extends Pointer {
      * @see Pointer#write(long,char[],int,int)
      */
     public void write(long bOff, char[] buf, int index, int length) {
-        boundsCheck(bOff, length * 2);
+        boundsCheck(bOff, length * 2L);
         super.write(bOff, buf, index, length);
     }
 
@@ -339,7 +346,7 @@ public class Memory extends Pointer {
      * @see Pointer#write(long,int[],int,int) 
      */
     public void write(long bOff, int[] buf, int index, int length) {
-        boundsCheck(bOff, length * 4);
+        boundsCheck(bOff, length * 4L);
         super.write(bOff, buf, index, length);
     }
 
@@ -353,7 +360,7 @@ public class Memory extends Pointer {
      * @see Pointer#write(long,long[],int,int) 
      */
     public void write(long bOff, long[] buf, int index, int length) {
-        boundsCheck(bOff, length * 8);
+        boundsCheck(bOff, length * 8L);
         super.write(bOff, buf, index, length);
     }
 
@@ -367,7 +374,7 @@ public class Memory extends Pointer {
      * @see Pointer#write(long,float[],int,int)
      */
     public void write(long bOff, float[] buf, int index, int length) {
-        boundsCheck(bOff, length * 4);
+        boundsCheck(bOff, length * 4L);
         super.write(bOff, buf, index, length);
     }
 
@@ -381,7 +388,7 @@ public class Memory extends Pointer {
      * @see Pointer#write(long,double[],int,int) 
      */
     public void write(long bOff, double[] buf, int index, int length) {
-        boundsCheck(bOff, length * 8);
+        boundsCheck(bOff, length * 8L);
         super.write(bOff, buf, index, length);
     }
 
@@ -504,7 +511,12 @@ public class Memory extends Pointer {
     }
 
     /**
-     * Get a ByteBuffer mapped to a portion of this memory.
+     * Get a ByteBuffer mapped to a portion of this memory.  
+     * We keep a weak reference to all ByteBuffers provided so that this
+     * memory object is not GC'd while there are still implicit outstanding
+     * references to it (it'd be nice if we could attach our own reference to
+     * the ByteBuffer, but the VM generates the object so we have no control
+     * over it).
      *
      * @param offset byte offset from pointer to start the buffer
      * @param length Length of ByteBuffer
@@ -659,24 +671,24 @@ public class Memory extends Pointer {
      */
     public void setString(long offset, String value, boolean wide) {
         if (wide)
-            boundsCheck(offset, (value.length() + 1) * Native.WCHAR_SIZE);
+            boundsCheck(offset, (value.length() + 1L) * Native.WCHAR_SIZE);
         else
-            boundsCheck(offset, value.getBytes().length + 1);
+            boundsCheck(offset, value.getBytes().length + 1L);
         super.setString(offset, value, wide);
     }
 
-    /**
-     * Call the real native malloc
-     */
-    protected static native long malloc(long size);
-
-    /**
-     * Call the real native free
-     */
-    protected static native void free(long ptr);
-    
     public String toString() {
         return "allocated@0x" + Long.toHexString(peer) + " ("
             + size + " bytes)";
     }
+
+    protected static void free(long p) {
+        Native.free(p);
+    }
+
+    protected static long malloc(long size) {
+        return Native.malloc(size);
+    }
 }
+
+
