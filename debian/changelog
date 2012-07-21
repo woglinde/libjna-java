@@ -4,6 +4,8 @@ libjna-java (3.3.0-1) unstable; urgency=low
   * Refresh patches.
   * Bump standards version (no changes required).
   * Link javadoc to default-jdk API
+  * Remove Michael Koch <konqueror@gmx.de> from uploaders 
+    (Closes: #654084).
 
  -- Andrew Ross <ubuntu@rossfamily.co.uk>  Mon, 16 Jul 2012 18:17:37 +0100
 
