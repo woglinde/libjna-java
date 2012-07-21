@@ -1,3 +1,5 @@
+Support multi-arch directories in library lookups.
+
 --- a/src/com/sun/jna/Platform.java
 +++ b/src/com/sun/jna/Platform.java
 @@ -99,4 +99,57 @@
