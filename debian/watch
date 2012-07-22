@@ -1,3 +1,6 @@
 version=3
 
-https://svn.java.net/svn/jna~svn/tags/ ([\d\.]+\d)/ debian debian/repack-source.sh
+opts="downloadurlmangle=s|tarball/(\d[\d\.]+)|blob/$1/dist/src.zip?raw=true|,\
+filenamemangle=s|.*/tarball/(.*)$|libjna-java_$1.orig.zip|" \
+https://github.com/twall/jna/tags .*/tarball/(\d[\d\.]+) debian jh_repack
+
