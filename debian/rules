@@ -5,12 +5,11 @@ export JAVA_HOME=/usr/lib/jvm/default-java
 VERSION=$(shell dpkg-parsechangelog | sed -rne 's,^Version: ([^-]+).*,\1,p')
 
 override_dh_auto_clean:
-	if [ -f nbproject/profiler-build-impl.xml ]; then \
-		ant -f build.xml clean; \
-	fi
+	ant -f build.xml clean
 	rm -f build.number
 	rm -rf build doc
 	rm -rf contrib/platform/build
+	rm -f dist/platforms-sources.jar
 	mh_clean
 	dh_clean
 
@@ -20,7 +19,7 @@ override_dh_auto_build:
 
 # install. using platform.jar is a silly idea in /usr/share/java/ as it's bound to collide
 override_dh_auto_install:
-	mh_installjar -plibjna-java -l --usj-name=jna pom.xml build/jna.jar
+	mh_installjar -plibjna-java -l --usj-name=jna pom-jna.xml build/jna.jar
 	jh_installlibs -plibjna-java build/jna-platform.jar
 
 override_dh_makeshlibs:
