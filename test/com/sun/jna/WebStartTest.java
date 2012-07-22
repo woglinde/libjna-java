@@ -55,7 +55,7 @@ public class WebStartTest extends TestCase {
         + "  <information>\n"
         + "    <title>JNLP Web Start Test</title>\n"
         + "    <vendor>JNA</vendor>\n"
-        + "    <homepage href='http://jna.dev.java.net'/>\n"
+        + "    <homepage href='http://github.com/twall/jna'/>\n"
         + "    <description>Local JNLP launch test.</description>\n"
         + "    <description kind='short'>Launch Test</description>\n"
         + "  </information>\n"
@@ -107,7 +107,7 @@ public class WebStartTest extends TestCase {
     }
 
     public void testJNLPFindProcessLibrary() {
-        String libname = Platform.isWindows()?"msvcrt":"c";
+        String libname = Platform.C_LIBRARY_NAME;
         assertNull("Process library path not expected to be found by JNLP class loader",
                    Native.getWebStartLibraryPath(libname));
         Native.loadLibrary(libname, Dummy.class);

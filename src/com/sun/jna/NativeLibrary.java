@@ -1,6 +1,6 @@
 /* Copyright (c) 2007 Wayne Meissner, All Rights Reserved
  * Copyright (c) 2007, 2008, 2009 Timothy Wall, All Rights Reserved
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -110,7 +110,7 @@ public class NativeLibrary {
                 searchPath.addAll(0, customPaths);
             }
         }
-        
+
         searchPath.addAll(initPaths("jna.library.path"));
         String libraryPath = findLibraryPath(libraryName, searchPath);
         long handle = 0;
@@ -130,6 +130,9 @@ public class NativeLibrary {
             if (handle == 0) {
                 libraryPath = findLibraryPath(libraryName, searchPath);
                 handle = Native.open(libraryPath);
+                if (handle == 0) {
+                    throw new UnsatisfiedLinkError("Failed to load library '" + libraryName + "'");
+                }
             }
         }
         catch(UnsatisfiedLinkError e) {
@@ -150,7 +153,7 @@ public class NativeLibrary {
                 libraryPath = "/System/Library/Frameworks/" + libraryName
                     + ".framework/" + libraryName;
                 if (new File(libraryPath).exists()) {
-                    try { 
+                    try {
                         handle = Native.open(libraryPath);
                     }
                     catch(UnsatisfiedLinkError e2) { e = e2; }
@@ -201,7 +204,7 @@ public class NativeLibrary {
     public static final NativeLibrary getInstance(String libraryName) {
         return getInstance(libraryName, Collections.EMPTY_MAP);
     }
-    
+
     /**
      * Returns an instance of NativeLibrary for the specified name.
      * The library is loaded if not already loaded.  If already loaded, the
@@ -224,7 +227,7 @@ public class NativeLibrary {
 
         // Use current process to load libraries we know are already
         // loaded by the VM to ensure we get the correct version
-        if (Platform.isLinux() && "c".equals(libraryName)) {
+        if ((Platform.isLinux() || Platform.isAix()) && "c".equals(libraryName)) {
             libraryName = null;
         }
         synchronized (libraries) {
@@ -389,9 +392,9 @@ public class NativeLibrary {
     public String getName() {
         return libraryName;
     }
-    /** 
+    /**
      * Returns the file on disk corresponding to this NativeLibrary instance.
-     * If this NativeLibrary represents the current process, this function will return null. 
+     * If this NativeLibrary represents the current process, this function will return null.
      */
     public File getFile() {
         if (libraryPath == null)
@@ -421,11 +424,11 @@ public class NativeLibrary {
     /** Close the native library we're mapped to. */
     public void dispose() {
         synchronized(libraries) {
-            libraries.remove(getName() + options);
-            File file = getFile();
-            if (file != null) {
-                libraries.remove(file.getAbsolutePath() + options);
-                libraries.remove(file.getName() + options);
+            for (Iterator i=libraries.values().iterator();i.hasNext();) {
+                Reference ref = (WeakReference)i.next();
+                if (ref.get() == this) {
+                    i.remove();
+                }
             }
         }
         synchronized(this) {
@@ -514,6 +517,14 @@ public class NativeLibrary {
                 // A specific version was requested - use as is for search
                 return libName;
             }
+        }
+        else if (Platform.isAix()) {	// can be libx.a, libx.a(shr.o), libx.so
+            if (libName.startsWith("lib")) {
+                return libName;
+            }
+			else {
+				return System.mapLibraryName(libName);
+			}
         }
         else if (Platform.isWindows()) {
         	if (libName.endsWith(".drv") || libName.endsWith(".dll")) {
@@ -627,12 +638,12 @@ public class NativeLibrary {
             // Search first for an arch specific path if one exists, but always
             // include the generic paths if they exist.
             // NOTES (wmeissner):
-            // Some older linux amd64 distros did not have /usr/lib64, and 32bit
-            // distros only have /usr/lib.  FreeBSD also only has /usr/lib by
-            // default, with /usr/lib32 for 32bit compat.
-            // Solaris seems to have both, but defaults to 32bit userland even on
-            // 64bit machines, so we have to explicitly search the 64bit one when
-            // running a 64bit JVM.
+            // Some older linux amd64 distros did not have /usr/lib64, and
+            // 32bit distros only have /usr/lib.  FreeBSD also only has
+            // /usr/lib by default, with /usr/lib32 for 32bit compat.
+            // Solaris seems to have both, but defaults to 32bit userland even
+            // on 64bit machines, so we have to explicitly search the 64bit
+            // one when running a 64bit JVM.
             //
             if (Platform.isLinux() || Platform.isSolaris() || Platform.isFreeBSD()) {
                 // Linux & FreeBSD use /usr/lib32, solaris uses /usr/lib/32
@@ -644,11 +655,37 @@ public class NativeLibrary {
                 "/usr/lib",
                 "/lib",
             };
-            // Linux 64-bit does not use /lib or /usr/lib
-            if (Platform.isLinux() && Pointer.SIZE == 8) {
+            // Fix for multi-arch support on Ubuntu (and other
+            // multi-arch distributions)
+            // paths is scanned against real directory
+            // so for platforms which are not multi-arch
+            // this should continue to work.
+            if (Platform.isLinux()) {
+                // Defaults - overridden below
+                String cpu = "";
+                String kernel = "linux";
+                String libc = "gnu";
+
+                if (Platform.isIntel()) {
+                    cpu = (Platform.is64Bit() ? "x86_64" : "i386");
+                } else if (Platform.isPPC()) {
+                    cpu = (Platform.is64Bit() ? "powerpc64" : "powerpc");
+                } else if (Platform.isARM()) {
+                    cpu = "arm";
+                    libc = "gnueabi";
+                }
+
+                String multiArchPath =
+                    cpu + "-" + kernel + "-" + libc;
+
+                // Assemble path with all possible options
                 paths = new String[] {
+                    "/usr/lib/" + multiArchPath,
+                    "/lib/" + multiArchPath,
                     "/usr/lib" + archPath,
                     "/lib" + archPath,
+                    "/usr/lib",
+                    "/lib",
                 };
             }
             for (int i=0;i < paths.length;i++) {
