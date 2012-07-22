@@ -6,6 +6,8 @@ libjna-java (3.4.1-1) unstable; urgency=low
   * Link javadoc to default-jdk API
   * Remove Michael Koch <konqueror@gmx.de> from uploaders
     (Closes: #654084).
+  * Use hardening-wrapper to correct lintian warnings.
+  * Update d/watch for new upstream location
 
  -- Andrew Ross <ubuntu@rossfamily.co.uk>  Sun, 22 Jul 2012 21:40:29 +0100
 

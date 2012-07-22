@@ -6,9 +6,9 @@ Uploaders: Jan Dittberner <jandd@debian.org>,
  Ludovic Claude <ludovic.claude@laposte.net>, Andrew Ross <ubuntu@rossfamily.co.uk>
 Build-Depends: debhelper (>= 7.0.50~), default-jdk, ant, default-jdk-doc,
  ant-optional, libx11-dev, libxt-dev, libffi-dev, pkg-config,
- maven-repo-helper (>= 1.5~), javahelper (>=0.32~)
+ maven-repo-helper (>= 1.5~), javahelper (>=0.32~), hardening-wrapper
 Standards-Version: 3.9.3
-Homepage: http://jna.dev.java.net/
+Homepage: https://github.com/twall/jna
 Vcs-Git: git://git.debian.org/pkg-java/libjna-java.git
 Vcs-Browser: http://git.debian.org/?p=pkg-java/libjna-java.git;a=summary
 

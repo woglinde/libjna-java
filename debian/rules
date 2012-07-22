@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 export JAVA_HOME=/usr/lib/jvm/default-java
+export DEB_BUILD_HARDENING=1
 
 VERSION=$(shell dpkg-parsechangelog | sed -rne 's,^Version: ([^-]+).*,\1,p')
 
