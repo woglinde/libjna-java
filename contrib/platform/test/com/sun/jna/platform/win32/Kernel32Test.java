@@ -15,8 +15,11 @@ package com.sun.jna.platform.win32;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 import java.util.TimeZone;
 
 import junit.framework.TestCase;
@@ -24,6 +27,8 @@ import junit.framework.TestCase;
 import com.sun.jna.Native;
 import com.sun.jna.NativeMappedConverter;
 import com.sun.jna.Platform;
+import com.sun.jna.Pointer;
+import com.sun.jna.Memory;
 import com.sun.jna.platform.win32.WinBase.MEMORYSTATUSEX;
 import com.sun.jna.platform.win32.WinBase.SYSTEM_INFO;
 import com.sun.jna.platform.win32.WinDef.DWORD;
@@ -95,7 +100,7 @@ public class Kernel32Test extends TestCase {
     	IntByReference lpnSize = new IntByReference(0);
     	assertFalse(Kernel32.INSTANCE.GetComputerName(null, lpnSize));
     	assertEquals(W32Errors.ERROR_BUFFER_OVERFLOW, Kernel32.INSTANCE.GetLastError());
-    	char buffer[] = new char[WinBase.MAX_COMPUTERNAME_LENGTH() + 1];
+    	char buffer[] = new char[WinBase.MAX_COMPUTERNAME_LENGTH + 1];
     	lpnSize.setValue(buffer.length);
     	assertTrue(Kernel32.INSTANCE.GetComputerName(buffer, lpnSize));
     }
@@ -198,8 +203,8 @@ public class Kernel32Test extends TestCase {
     
     public void testGetVersion() {
     	DWORD version = Kernel32.INSTANCE.GetVersion();
-    	assertTrue(version.getHigh().intValue() != 0);
-    	assertTrue(version.getLow().intValue() >= 0);
+    	assertTrue("Version high should be non-zero: 0x" + Integer.toHexString(version.getHigh().intValue()), version.getHigh().intValue() != 0);
+    	assertTrue("Version low should be >= 0: 0x" + Integer.toHexString(version.getLow().intValue()), version.getLow().intValue() >= 0);
     }
     
     public void testGetVersionEx_OSVERSIONINFO() {
@@ -298,11 +303,11 @@ public class Kernel32Test extends TestCase {
     			new WinBase.SECURITY_ATTRIBUTES(), WinNT.OPEN_EXISTING, WinNT.FILE_ATTRIBUTE_NORMAL, null);
     	assertFalse(hFile == WinBase.INVALID_HANDLE_VALUE);
     	
-    	ByteBuffer b = ByteBuffer.allocate(2048);
+    	Memory m = new Memory(2048);
     	IntByReference lpNumberOfBytesRead = new IntByReference(0);
-    	assertTrue(Kernel32.INSTANCE.ReadFile(hFile, b, b.capacity(), lpNumberOfBytesRead, null));
+    	assertTrue(Kernel32.INSTANCE.ReadFile(hFile, m, (int)m.size(), lpNumberOfBytesRead, null));
     	assertEquals(expected.length(), lpNumberOfBytesRead.getValue());
-    	assertEquals(expected, Native.toString(b.array()));
+    	assertEquals(expected, m.getString(0));
     	
     	assertTrue(Kernel32.INSTANCE.CloseHandle(hFile));    	
     }
@@ -347,5 +352,118 @@ public class Kernel32Test extends TestCase {
     
     public void testGetFileAttributes() {
     	assertTrue(WinBase.INVALID_FILE_ATTRIBUTES != Kernel32.INSTANCE.GetFileAttributes("."));    	
+    }
+
+    public void testCopyFile() throws IOException {
+        File source = File.createTempFile("testCopyFile", "jna");
+        source.deleteOnExit();
+        File destination = new File(source.getParent(), source.getName() + "-destination");
+        destination.deleteOnExit();
+
+        Kernel32.INSTANCE.CopyFile(source.getCanonicalPath(), destination.getCanonicalPath(), true);
+        assertTrue(destination.exists());
+    }
+
+    public void testMoveFile() throws IOException {
+        File source = File.createTempFile("testMoveFile", "jna");
+        source.deleteOnExit();
+        File destination = new File(source.getParent(), source.getName() + "-destination");
+        destination.deleteOnExit();
+
+        Kernel32.INSTANCE.MoveFile(source.getCanonicalPath(), destination.getCanonicalPath());
+        assertTrue(destination.exists());
+        assertFalse(source.exists());
+    }
+
+    public void testMoveFileEx() throws IOException {
+        File source = File.createTempFile("testMoveFileEx", "jna");
+        source.deleteOnExit();
+        File destination = File.createTempFile("testCopyFile", "jna");
+        destination.deleteOnExit();
+
+        Kernel32.INSTANCE.MoveFileEx(source.getCanonicalPath(), destination.getCanonicalPath(), new DWORD(WinBase.MOVEFILE_REPLACE_EXISTING));
+        assertTrue(destination.exists());
+        assertFalse(source.exists());
+    }
+
+    public void testCreateProcess() {
+        WinBase.STARTUPINFO startupInfo = new WinBase.STARTUPINFO();
+        WinBase.PROCESS_INFORMATION.ByReference processInformation = new WinBase.PROCESS_INFORMATION.ByReference();
+
+        boolean status = Kernel32.INSTANCE.CreateProcess(
+            null,
+            "cmd.exe /c echo hi",
+            null,
+            null,
+            true,
+            new WinDef.DWORD(0),
+            Pointer.NULL,
+            System.getProperty("java.io.tmpdir"),
+            startupInfo,
+            processInformation);
+
+        assertTrue(status);
+        assertTrue(processInformation.dwProcessId.longValue() > 0);
+    }
+
+    public void testSetEnvironmentVariable() {
+        int value = new Random().nextInt();
+        Kernel32.INSTANCE.SetEnvironmentVariable("jna-setenvironment-test", Integer.toString(value));
+
+        assertEquals(System.getenv("jna-setenvironment-test"), Integer.toString(value));
+    }
+
+    public void testGetSetFileTime() throws IOException {
+        File tmp = File.createTempFile("testGetSetFileTime", "jna");
+        tmp.deleteOnExit();
+
+        HANDLE hFile = Kernel32.INSTANCE.CreateFile(tmp.getAbsolutePath(), WinNT.GENERIC_WRITE, WinNT.FILE_SHARE_WRITE,
+    			new WinBase.SECURITY_ATTRIBUTES(), WinNT.OPEN_EXISTING, WinNT.FILE_ATTRIBUTE_NORMAL, null);
+    	assertFalse(hFile == WinBase.INVALID_HANDLE_VALUE);
+
+        WinBase.FILETIME.ByReference creationTime = new WinBase.FILETIME.ByReference();
+        WinBase.FILETIME.ByReference accessTime = new WinBase.FILETIME.ByReference();
+        WinBase.FILETIME.ByReference modifiedTime = new WinBase.FILETIME.ByReference();
+        Kernel32.INSTANCE.GetFileTime(hFile, creationTime, accessTime, modifiedTime);
+
+        assertEquals(creationTime.toDate().getYear(), new Date().getYear());
+        assertEquals(accessTime.toDate().getYear(), new Date().getYear());
+        assertEquals(modifiedTime.toDate().getYear(), new Date().getYear());
+
+        Kernel32.INSTANCE.SetFileTime(hFile, null, null, new WinBase.FILETIME(new Date(2010, 1, 1)));
+
+        assertTrue(Kernel32.INSTANCE.CloseHandle(hFile));
+
+        assertEquals(2010, new Date(tmp.lastModified()).getYear());
+    }
+
+    public void testSetFileAttributes() throws IOException {
+        File tmp = File.createTempFile("testSetFileAttributes", "jna");
+        tmp.deleteOnExit();
+
+        Kernel32.INSTANCE.SetFileAttributes(tmp.getCanonicalPath(), new DWORD(WinNT.FILE_ATTRIBUTE_HIDDEN));
+        int attributes = Kernel32.INSTANCE.GetFileAttributes(tmp.getCanonicalPath());
+
+        assertTrue((attributes & WinNT.FILE_ATTRIBUTE_HIDDEN) != 0);
+    }
+
+    public void testGetProcessList() throws IOException {
+        WinNT.HANDLE processEnumHandle = Kernel32.INSTANCE.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPALL, new WinDef.DWORD(0));
+        assertFalse(WinBase.INVALID_HANDLE_VALUE.equals(processEnumHandle));
+
+        Tlhelp32.PROCESSENTRY32.ByReference processEntry = new Tlhelp32.PROCESSENTRY32.ByReference();
+
+        assertTrue(Kernel32.INSTANCE.Process32First(processEnumHandle, processEntry));
+
+        List<Long> processIdList = new ArrayList<Long>();
+        processIdList.add(processEntry.th32ProcessID.longValue());
+
+        while (Kernel32.INSTANCE.Process32Next(processEnumHandle, processEntry))
+        {
+            processIdList.add(processEntry.th32ProcessID.longValue());
+        }
+
+        assertTrue(Kernel32.INSTANCE.CloseHandle(processEnumHandle));
+        assertTrue(processIdList.size() > 4);
     }
 }

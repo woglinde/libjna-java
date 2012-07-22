@@ -30,15 +30,50 @@ public class JNAUnloadTest extends TestCase {
     private static class TestLoader extends URLClassLoader {
         public TestLoader(boolean fromJar) throws MalformedURLException {
             super(new URL[] {
-                new File(BUILDDIR + (fromJar ? "/jna.jar" : "/classes")).toURI().toURL(),
+                    Platform.isWindowsCE() 
+                    ? new File("/Storage Card/" + (fromJar ? "jna.jar" : "test.jar")).toURI().toURL()
+                    : new File(BUILDDIR + (fromJar ? "/jna.jar" : "/classes")).toURI().toURL(),
             }, null);
+        }
+        protected Class findClass(String name) throws ClassNotFoundException {
+            String boot = System.getProperty("jna.boot.library.path");
+            if (boot != null) {
+                System.setProperty("jna.boot.library.path", "");
+            }
+            Class cls = super.findClass(name);
+            if (boot != null) {
+                System.setProperty("jna.boot.library.path", boot);
+            }
+            return cls;
+        }
+    }
+
+    public void testLoadFromJar() throws Exception {
+        Class.forName("com.sun.jna.Native", true, new TestLoader(true));
+    }
+
+    public void testAvoidJarUnpacking() throws Exception {
+        System.setProperty("jna.nounpack", "true");
+        ClassLoader loader = new TestLoader(true);
+        try {
+            Class cls = Class.forName("com.sun.jna.Native", true, loader);
+
+            fail("Class com.sun.jna.Native should not be loadable if jna.nounpack=true: "
+                 + cls.getClassLoader());
+        }
+        catch(UnsatisfiedLinkError e) {
+        }
+        finally {
+            System.setProperty("jna.nounpack", "false");
         }
     }
 
     // Fails under clover
     public void testUnloadFromJar() throws Exception {
-        File jar = new File(BUILDDIR + "/jna.jar");
-        assertTrue("Expected JNA jar file at " + jar + " is missing", jar.exists());
+        File jar = new File((Platform.isWindowsCE() ? "/Storage Card" : BUILDDIR) + "/jna.jar");
+        if (!jar.exists()) {
+            throw new Error("Expected JNA jar file at " + jar + " is missing");
+        }
 
         ClassLoader loader = new TestLoader(true);
         Class cls = Class.forName("com.sun.jna.Native", true, loader);
@@ -47,6 +82,7 @@ public class JNAUnloadTest extends TestCase {
         Field field = cls.getDeclaredField("nativeLibraryPath");
         field.setAccessible(true);
         String path = (String)field.get(null);
+        assertNotNull("Native library path unavailable", path);
         assertTrue("Native library not unpacked from jar: " + path,
                    path.startsWith(System.getProperty("java.io.tmpdir")));
 
@@ -62,31 +98,27 @@ public class JNAUnloadTest extends TestCase {
         }
         assertNull("Class not GC'd: " + ref.get(), ref.get());
         assertNull("ClassLoader not GC'd: " + clref.get(), clref.get());
+
+        // Check for temporary file deletion
         File f = new File(path);
         for (int i=0;i < 100 && f.exists();i++) {
             Thread.sleep(10);
             System.gc();
         }
-        // NOTE: Temporary file removal on Windows only works on a Sun VM
-        try {
-            if (Platform.isWindows()) {
-                ClassLoader.class.getDeclaredField("nativeLibraries");
-            }
-            if (f.exists() && !f.delete()) {
-                assertFalse("Temporary native library still locked: " + path,
-                            f.exists());
-            }
-        }
-        catch(Exception e) {
-            // Skip on non-supported VMs
+
+        if (f.exists()) {
+            assertTrue("Temporary jnidispatch not marked for later deletion: "
+                       + f, new File(f.getAbsolutePath()+".x").exists());
         }
 
+        // Should be able to load again without complaints about library
+        // already loaded in another class loader
         try {
             loader = new TestLoader(true);
             cls = Class.forName("com.sun.jna.Native", true, loader);
         }
         catch(Throwable t) {
-            fail("Native library not unloaded: " + t.getMessage());
+            fail("Couldn't load class again after discarding first load: " + t.getMessage());
         }
         finally {
             loader = null;
@@ -95,7 +127,7 @@ public class JNAUnloadTest extends TestCase {
         }
     }
 
-    // Fails under clover
+    // Fails under clover and OpenJDK(linux/ppc)
     public void testUnload() throws Exception {
         ClassLoader loader = new TestLoader(false);
         Class cls = Class.forName("com.sun.jna.Native", true, loader);
@@ -136,8 +168,9 @@ public class JNAUnloadTest extends TestCase {
             }
         }
         try {
-            if (loader == null)
+            if (loader == null) {
                 fail("Native library not unloaded: " + throwable.getMessage());
+            }
         }
         finally {
             loader = null;

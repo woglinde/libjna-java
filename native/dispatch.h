@@ -8,7 +8,7 @@
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.  
+ * Lesser General Public License for more details.
  */
 #ifndef DISPATCH_H
 #define DISPATCH_H
@@ -16,7 +16,7 @@
 #include "ffi.h"
 #include "com_sun_jna_Function.h"
 #include "com_sun_jna_Native.h"
-#ifdef sun
+#if defined(sun) || defined(_AIX)
 #  include <alloca.h>
 #endif
 #ifdef _WIN32
@@ -37,7 +37,7 @@
   #define UNUSED(x) UNUSED_ ## x __attribute__((unused))
  #elif defined(__LCLINT__)
   #define UNUSED(x) /*@unused@*/ x
- #else 
+ #else
   #define UNUSED(x) x
  #endif
 #endif /* !defined(UNUSED) */
@@ -82,9 +82,18 @@ enum {
   CVT_TYPE_MAPPER = com_sun_jna_Native_CVT_TYPE_MAPPER,
 };
 
+/* callback behavior flags */
+enum {
+  CB_HAS_INITIALIZER = com_sun_jna_Native_CB_HAS_INITIALIZER,
+  THREAD_LEAVE_ATTACHED = com_sun_jna_Native_THREAD_LEAVE_ATTACHED,
+  THREAD_DETACH = com_sun_jna_Native_THREAD_DETACH,
+};
+
 typedef struct _callback {
-  // Location of this field must agree with CallbackReference.getTrampoline()
+  /* CallbackReference.getTrampoline() expects this field at offset 0. */
   void* x_closure;
+  /* CallbackReference.setCallbackOptions() expects this field at offset Pointer.SIZE. */
+  int behavior_flags;
   ffi_closure* closure;
   ffi_cif cif;
   ffi_cif java_cif;
@@ -115,6 +124,10 @@ typedef struct _callback {
 #define L2A(X) ((void *)(X))
 #define A2L(X) ((jlong)(X))
 #define snprintf sprintf_s
+#else
+#if defined(_WIN32_WCE)
+#define snprintf _snprintf
+#endif
 #endif
 
 /* Convenience macros */
@@ -153,7 +166,7 @@ extern ffi_type* get_ffi_rtype(JNIEnv*, jclass, char);
 extern const char* jnidispatch_callback_init(JNIEnv*);
 extern void jnidispatch_callback_dispose(JNIEnv*);
 extern callback* create_callback(JNIEnv*, jobject, jobject,
-                                 jobjectArray, jclass, 
+                                 jobjectArray, jclass,
                                  callconv_t, jboolean);
 extern void free_callback(JNIEnv*, callback*);
 extern void extract_value(JNIEnv*, jobject, void*, size_t, jboolean);
@@ -177,6 +190,15 @@ extern void writeStructure(JNIEnv*, jobject);
 extern jclass getNativeType(JNIEnv*, jclass);
 extern void toNative(JNIEnv*, jobject, void*, size_t, jboolean);
 extern jclass fromNative(JNIEnv*, jclass, ffi_type*, void*, jboolean);
+
+typedef struct _AttachOptions {
+  int daemon;
+  int detach;
+  char* name;
+} AttachOptions;
+extern jobject initializeThread(callback*,AttachOptions*);
+extern int lastError();
+extern void setLastError(int err);
 
 /* Native memory fault protection */
 #ifdef HAVE_PROTECTION
