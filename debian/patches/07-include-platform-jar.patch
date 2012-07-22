@@ -38,3 +38,15 @@ upstream version should already include this.
 +  </target>
 +</project>
 +
+--- a/build.xml
++++ b/build.xml
+@@ -291,9 +291,6 @@
+       <zipfileset dir="${src}" includes="**/*.java,**/*.html,**/*.png"/>
+       <zipfileset dir="${contrib}/platform" includes="**/*.java"/>
+     </zip>
+-    <jar jarfile="${platform-javadoc-jar}">
+-        <fileset dir="${javadoc}" />
+-    </jar>
+   </target>
+ 
+   <target name="contrib-jars" depends="platform-jar" description="Build contrib jars">

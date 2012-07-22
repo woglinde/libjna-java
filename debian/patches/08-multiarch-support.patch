@@ -1,19 +1,57 @@
-Support multi-arch directories in library lookups.
+Support all Debian multi-arch directories in library lookups.
 
+--- a/build.xml
++++ b/build.xml
+@@ -210,6 +210,8 @@
+     <echo>java.home=${java.home}</echo>
+     <echo>java.library.path=${java.library.path}</echo>
+     <echo>os.prefix=${os.prefix}</echo>
++    <echo>os.name=${os.name}</echo>
++    <echo>os.arch=${os.arch}</echo>
+ 
+   </target>
+ 
 --- a/src/com/sun/jna/Platform.java
 +++ b/src/com/sun/jna/Platform.java
-@@ -99,4 +99,57 @@
+@@ -20,6 +20,8 @@
+     public static final int OPENBSD = 5;
+     public static final int WINDOWSCE = 6;
+     public static final int AIX = 7;
++    public static final int GNU = 8;
++    public static final int KFREEBSD = 9;
+ 
+     /** Whether read-only (final) fields within Structures are supported. */
+     public static final boolean RO_FIELDS;
+@@ -60,6 +62,12 @@
+         else if (osName.startsWith("OpenBSD")) {
+             osType = OPENBSD;
          }
-         return Native.POINTER_SIZE == 8;
++        else if (osName.equalsIgnoreCase("gnu")) {
++            osType = GNU;
++        }
++        else if (osName.equalsIgnoreCase("gnu/kfreebsd")) {
++            osType = KFREEBSD;
++        }
+         else {
+             osType = UNSPECIFIED;
+         }
+@@ -112,6 +120,11 @@
+     public static final boolean isOpenBSD() {
+         return osType == OPENBSD;
      }
 +    public static final boolean isGNU() {
-+        String name = System.getProperty("os.name").toLowerCase().trim();
-+        return "gnu".equals(name);
++        return osType == GNU;
++    }    public static final boolean iskFreeBSD() {
++        return osType == KFREEBSD;
 +    }
-+    public static final boolean iskFreeBSD() {
-+        String name = System.getProperty("os.name").toLowerCase().trim();
-+        return "gnu/kfreebsd".equals(name);
-+    }
+     public static final boolean isX11() {
+         // TODO: check filesystem for /usr/X11 or some other X11-specific test
+         return !Platform.isWindows() && !Platform.isMac();
+@@ -173,4 +186,19 @@
+             return false;
+         }
+     }
++
 +    public static final String getBaseArch() {
 +        String arch =
 +            System.getProperty("os.arch").toLowerCase().trim();
@@ -27,109 +65,51 @@ Support multi-arch directories in library lookups.
 +            arch = "powerpc64";
 +        return arch;
 +    }
-+    public static final boolean isIntel() {
-+        String arch =
-+            System.getProperty("os.arch").toLowerCase().trim();
-+        if (arch.equals("i386") ||
-+            arch.equals("x86_64") ||
-+            arch.equals("amd64")) {
-+            return true;
-+        } else {
-+            return false;
-+        }
-+    }
 +
-+    public static final boolean isPPC() {
-+        String arch =
-+            System.getProperty("os.arch").toLowerCase().trim();
-+        if (arch.equals("ppc") ||
-+            arch.equals("ppc64")) {
-+            return true;
-+        } else {
-+            return false;
-+        }
-+    }
-+
-+    public static final boolean isARM() {
-+        String arch =
-+            System.getProperty("os.arch").toLowerCase().trim();
-+        if (arch.equals("arm"))  {
-+            return true;
-+        } else {
-+            return false;
-+        }
-+    }
  }
 --- a/src/com/sun/jna/NativeLibrary.java
 +++ b/src/com/sun/jna/NativeLibrary.java
-@@ -634,7 +634,7 @@
-             // 64bit machines, so we have to explicitly search the 64bit one when
-             // running a 64bit JVM.
+@@ -645,7 +645,8 @@
+             // on 64bit machines, so we have to explicitly search the 64bit
+             // one when running a 64bit JVM.
              //
 -            if (Platform.isLinux() || Platform.isSolaris() || Platform.isFreeBSD()) {
-+            if (Platform.isLinux() || Platform.isSolaris() || Platform.isFreeBSD() || Platform.iskFreeBSD()) {
++            if (Platform.isLinux() || Platform.isSolaris() || Platform.isFreeBSD()
++                || Platform.iskFreeBSD()) {
                  // Linux & FreeBSD use /usr/lib32, solaris uses /usr/lib/32
                  archPath = (Platform.isSolaris() ? "/" : "") + Pointer.SIZE * 8;
              }
-@@ -644,11 +644,48 @@
-                 "/usr/lib",
-                 "/lib",
-             };
--            // Linux 64-bit does not use /lib or /usr/lib
--            if (Platform.isLinux() && Pointer.SIZE == 8) {
-+            // Fix for multi-arch support on Ubuntu (and other
-+            // multi-arch distributions)
-+            // paths is scanned against real directory
-+            // so for platforms which are not multi-arch
-+            // this should continue to work.
-+            if (Platform.isLinux() || Platform.iskFreeBSD()) {
-+                // Defaults - overridden below
+@@ -660,23 +661,23 @@
+             // paths is scanned against real directory
+             // so for platforms which are not multi-arch
+             // this should continue to work.
+-            if (Platform.isLinux()) {
++            if (Platform.isLinux() || Platform.iskFreeBSD() || Platform.isGNU()) {
+                 // Defaults - overridden below
+-                String cpu = "";
 +                String cpu = Platform.getBaseArch();
-+                String kernel = "linux";
-+                String libc = "gnu";
-+
-+                if (Platform.isARM()) {
-+                    libc = "gnueabi";
-+                }
-+
-+                String multiArchPath =
-+                    cpu + "-" + kernel + "-" + libc;
-+
-+                // Assemble path with all possible options
-                 paths = new String[] {
-+                    "/usr/lib/" + multiArchPath,
-+                    "/lib/" + multiArchPath,
-                     "/usr/lib" + archPath,
-                     "/lib" + archPath,
-+                    "/usr/lib",
-+                    "/lib",
-+                };
-+            }
-+            if (Platform.isGNU()) {
-+                String cpu = Platform.getBaseArch();
-+                String libc = "gnu";
-+                String multiArchPath =
-+                    cpu + "-" + libc;
-+
-+               // Assemble path with all possible options
-+                paths = new String[] {
-+                    "/usr/lib/" + multiArchPath,
-+                    "/lib/" + multiArchPath,
-+                    "/usr/lib" + archPath,
-+                    "/lib" + archPath,
-+                    "/usr/lib",
-+                    "/lib",
-                 };
-             }
-             for (int i=0;i < paths.length;i++) {
---- a/build.xml
-+++ b/build.xml
-@@ -73,6 +73,8 @@
-     <echo>${java.vm.name} (${java.vm.vendor}, ${java.vm.version})</echo>
-     <echo>java.home=${java.home}</echo>
-     <echo>java.library.path=${java.library.path}</echo>
-+    <echo>os.name=${os.name}</echo>
-+    <echo>os.arch=${os.arch}</echo>
+                 String kernel = "linux";
+                 String libc = "gnu";
  
-     <replaceregexp match="(&lt;version&gt;).*(&lt;/version&gt;)"
-                    replace="\1${jna.version}\2" 
+-                if (Platform.isIntel()) {
+-                    cpu = (Platform.is64Bit() ? "x86_64" : "i386");
+-                } else if (Platform.isPPC()) {
+-                    cpu = (Platform.is64Bit() ? "powerpc64" : "powerpc");
+-                } else if (Platform.isARM()) {
+-                    cpu = "arm";
++                if (Platform.isARM()) {
+                     libc = "gnueabi";
+                 }
+ 
+-                String multiArchPath =
+-                    cpu + "-" + kernel + "-" + libc;
++                String multiArchPath;
++
++                if (Platform.isGNU()) {
++                    multiArchPath = cpu + "-" + libc;
++                } else {
++                    multiArchPath = cpu + "-" + kernel + "-" + libc;
++                }
+ 
+                 // Assemble path with all possible options
+                 paths = new String[] {

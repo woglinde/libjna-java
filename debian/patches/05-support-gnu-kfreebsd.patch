@@ -3,17 +3,17 @@ Subject: patch build.xml and native/Makefile to support Debian GNU/kFreeBSD
 
 --- a/native/Makefile
 +++ b/native/Makefile
-@@ -22,6 +22,7 @@
- 
- OS=$(shell uname | sed -e 's/\(CYGWIN\|MINGW32\).*/win32/g' \
+@@ -37,6 +37,7 @@
+ OS=$(shell uname | sed -e 's/CYGWIN.*/win32/g' \
+ 	                -e 's/MINGW32.*/win32/g' \
                          -e 's/SunOS.*/solaris/g' \
-+			-e 's/GNU\/kFreeBSD/linux/g' \
-                         -e 's/FreeBSD.*/freebsd/g' \
-                         -e 's/OpenBSD.*/openbsd/g' \
-                         -e 's/Darwin.*/darwin/g' \
++                        -e 's/GNU\/kFreeBSD/linux/g' \
+                         -e 's/NetBSD/netbsd/g' \
+                         -e 's/FreeBSD/freebsd/g' \
+                         -e 's/OpenBSD/openbsd/g' \
 --- a/build.xml
 +++ b/build.xml
-@@ -130,6 +130,9 @@
+@@ -169,6 +169,9 @@
      <condition property="os.prefix" value="freebsd-${os.arch}">
        <os name="FreeBSD"/>
      </condition>
