@@ -79,7 +79,7 @@ Support all Debian multi-arch directories in library lookups.
                  // Linux & FreeBSD use /usr/lib32, solaris uses /usr/lib/32
                  archPath = (Platform.isSolaris() ? "/" : "") + Pointer.SIZE * 8;
              }
-@@ -660,23 +661,23 @@
+@@ -660,23 +661,27 @@
              // paths is scanned against real directory
              // so for platforms which are not multi-arch
              // this should continue to work.
@@ -103,6 +103,10 @@ Support all Debian multi-arch directories in library lookups.
  
 -                String multiArchPath =
 -                    cpu + "-" + kernel + "-" + libc;
++                if (Platform.iskFreeBSD()) {
++                    kernel = "kfreebsd";
++                }
++
 +                String multiArchPath;
 +
 +                if (Platform.isGNU()) {
