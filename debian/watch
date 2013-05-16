@@ -1,6 +1,2 @@
 version=3
-
-opts="downloadurlmangle=s|tarball/(\d[\d\.]+)|blob/$1/dist/src.zip?raw=true|,\
-filenamemangle=s|.*/tarball/(.*)$|libjna-java_$1.orig.zip|" \
-https://github.com/twall/jna/tags .*/tarball/(\d[\d\.]+) debian jh_repack
-
+https://github.com/twall/jna/tags .*/(\d[\d\.]+).tar.gz debian jh_repack
