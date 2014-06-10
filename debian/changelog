@@ -1,3 +1,11 @@
+libjna-java (3.5.1-1) UNRELEASED; urgency=low
+
+  [ Henning Heinold ]
+  * New upstream release
+  * Refresh patches.
+
+ -- Henning Heinold <h.heinold@tarent.de>  Tue, 10 Jun 2014 23:20:00 +0200
+
 libjna-java (3.4.1-1) UNRELEASED; urgency=low
 
   [ Andrew Ross ]
