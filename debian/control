@@ -6,7 +6,8 @@ Uploaders: Jan Dittberner <jandd@debian.org>,
  Ludovic Claude <ludovic.claude@laposte.net>, Andrew Ross <ubuntu@rossfamily.co.uk>
 Build-Depends: debhelper (>= 9), default-jdk, ant, default-jdk-doc,
  ant-optional, libx11-dev, libxt-dev, libffi-dev, pkg-config,
- maven-repo-helper (>= 1.5~), javahelper (>=0.32~), hardening-wrapper
+ maven-repo-helper (>= 1.5~), javahelper (>=0.32~), hardening-wrapper,
+ libmaven-ant-tasks-java
 Standards-Version: 3.9.5
 Vcs-Git: git://anonscm.debian.org/pkg-java/libjna-java.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-java/libjna-java.git
