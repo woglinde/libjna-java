@@ -3,9 +3,9 @@ Description: no special build dir for d64
 
 Index: libjna-java/build.xml
 ===================================================================
---- libjna-java.orig/build.xml	2014-06-10 23:48:11.649250708 +0200
-+++ libjna-java/build.xml	2014-06-10 23:48:13.077232756 +0200
-@@ -136,7 +136,7 @@
+--- libjna-java.orig/build.xml	2014-06-10 23:58:44.301297195 +0200
++++ libjna-java/build.xml	2014-06-10 23:58:52.745191041 +0200
+@@ -158,7 +158,7 @@
          <equals arg1="${vm.arch}" arg2="-d64"/>
        </and>
      </condition>
