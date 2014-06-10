@@ -3,9 +3,9 @@ Subject: disable javadoc options that are not supported by gjdoc
 
 Index: libjna-java/build.xml
 ===================================================================
---- libjna-java.orig/build.xml	2014-06-10 23:48:27.861046899 +0200
-+++ libjna-java/build.xml	2014-06-10 23:48:30.573012805 +0200
-@@ -704,7 +704,7 @@
+--- libjna-java.orig/build.xml	2014-06-11 00:09:03.021518829 +0200
++++ libjna-java/build.xml	2014-06-11 00:09:05.817483679 +0200
+@@ -899,7 +899,7 @@
        <group title="Platform Utilities" packages="com.sun.jna.platform,com.sun.jna.platform.dnd"/>
        <group title="Platform Specific" packages="com.sun.jna.platform.*"/>
  

@@ -3,9 +3,9 @@ Subject: try to load native library from /usr/lib/jni if system
 Author: Jan Dittberner <jandd@debian.org>
 Index: libjna-java/src/com/sun/jna/Native.java
 ===================================================================
---- libjna-java.orig/src/com/sun/jna/Native.java	2014-06-10 23:48:11.421253575 +0200
-+++ libjna-java/src/com/sun/jna/Native.java	2014-06-10 23:48:24.645087329 +0200
-@@ -642,6 +642,9 @@
+--- libjna-java.orig/src/com/sun/jna/Native.java	2014-06-10 23:58:00.973841930 +0200
++++ libjna-java/src/com/sun/jna/Native.java	2014-06-11 00:08:57.145592699 +0200
+@@ -649,6 +649,9 @@
  
          String libName = System.getProperty("jna.boot.library.name", "jnidispatch");
          String bootPath = System.getProperty("jna.boot.library.path");

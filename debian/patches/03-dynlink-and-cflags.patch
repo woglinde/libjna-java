@@ -3,9 +3,9 @@ Description: dynlink and cflags
 
 Index: libjna-java/build.xml
 ===================================================================
---- libjna-java.orig/build.xml	2014-06-10 23:48:13.077232756 +0200
-+++ libjna-java/build.xml	2014-06-10 23:48:19.029157930 +0200
-@@ -487,6 +487,19 @@
+--- libjna-java.orig/build.xml	2014-06-10 23:59:39.000000000 +0200
++++ libjna-java/build.xml	2014-06-11 00:07:38.318583689 +0200
+@@ -665,6 +665,18 @@
        <arg value="JNA_JNI_VERSION=${jni.version}"/>
        <arg value="CHECKSUM=${jni.md5}"/>
      </exec>
@@ -20,12 +20,11 @@ Index: libjna-java/build.xml
 +      </manifest>
 +    </jar>
 +  </target>
-+
-+  <target name="native-mixedjar" unless="nomixedjar.native">    
-     <mkdir dir="${classes}/com/sun/jna/${os.prefix}"/>
-     <copy todir="${classes}/com/sun/jna/${os.prefix}">
++  <target name="native-mixedjar" unless="nomixedjar.native">
+     <mkdir dir="${classes}/${native.path}"/>
+     <copy todir="${classes}/${native.path}">
        <fileset dir="${build.native}"
-@@ -498,15 +511,6 @@
+@@ -676,15 +688,6 @@
        <fileset dir="${build.native}"
                 includes="jnidispatch.dll,libjnidispatch.*"/>
      </copy>
@@ -38,6 +37,6 @@ Index: libjna-java/build.xml
 -        <attribute name="Specification-Version" value="${jni.version}"/>
 -      </manifest>
 -    </jar>
-   </target>
- 
-   <target name="compile-tests" depends="compile,native,jar"
+     <copy todir="${lib.native}">
+       <fileset dir="${build}" includes="${native.jar}"/>
+     </copy>

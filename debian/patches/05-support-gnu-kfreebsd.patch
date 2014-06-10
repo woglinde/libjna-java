@@ -3,9 +3,9 @@ Subject: patch build.xml and native/Makefile to support Debian GNU/kFreeBSD
 
 Index: libjna-java/native/Makefile
 ===================================================================
---- libjna-java.orig/native/Makefile	2014-06-10 23:48:11.333254681 +0200
-+++ libjna-java/native/Makefile	2014-06-10 23:48:27.861046899 +0200
-@@ -37,6 +37,7 @@
+--- libjna-java.orig/native/Makefile	2014-06-10 23:58:00.969841987 +0200
++++ libjna-java/native/Makefile	2014-06-11 00:09:03.021518829 +0200
+@@ -39,6 +39,7 @@
  OS=$(shell uname | sed -e 's/CYGWIN.*/win32/g' \
  	                -e 's/MINGW32.*/win32/g' \
                          -e 's/SunOS.*/solaris/g' \
@@ -15,9 +15,9 @@ Index: libjna-java/native/Makefile
                          -e 's/OpenBSD/openbsd/g' \
 Index: libjna-java/build.xml
 ===================================================================
---- libjna-java.orig/build.xml	2014-06-10 23:48:19.029157930 +0200
-+++ libjna-java/build.xml	2014-06-10 23:48:27.861046899 +0200
-@@ -169,6 +169,9 @@
+--- libjna-java.orig/build.xml	2014-06-11 00:08:53.785634940 +0200
++++ libjna-java/build.xml	2014-06-11 00:09:03.021518829 +0200
+@@ -191,6 +191,9 @@
      <condition property="os.prefix" value="freebsd-${os.arch}">
        <os name="FreeBSD"/>
      </condition>

@@ -1,34 +1,12 @@
 Support all Debian multi-arch directories in library lookups.
 
-Index: libjna-java/build.xml
-===================================================================
---- libjna-java.orig/build.xml	2014-06-10 23:48:33.808972123 +0200
-+++ libjna-java/build.xml	2014-06-10 23:48:36.384939739 +0200
-@@ -210,6 +210,8 @@
-     <echo>java.home=${java.home}</echo>
-     <echo>java.library.path=${java.library.path}</echo>
-     <echo>os.prefix=${os.prefix}</echo>
-+    <echo>os.name=${os.name}</echo>
-+    <echo>os.arch=${os.arch}</echo>
- 
-   </target>
- 
 Index: libjna-java/src/com/sun/jna/Platform.java
 ===================================================================
---- libjna-java.orig/src/com/sun/jna/Platform.java	2014-06-10 23:48:10.917259911 +0200
-+++ libjna-java/src/com/sun/jna/Platform.java	2014-06-10 23:48:36.384939739 +0200
-@@ -20,6 +20,8 @@
-     public static final int OPENBSD = 5;
-     public static final int WINDOWSCE = 6;
-     public static final int AIX = 7;
-+    public static final int GNU = 8;
-+    public static final int KFREEBSD = 9;
- 
-     /** Whether read-only (final) fields within Structures are supported. */
-     public static final boolean RO_FIELDS;
-@@ -60,6 +62,12 @@
-         else if (osName.startsWith("OpenBSD")) {
-             osType = OPENBSD;
+--- libjna-java.orig/src/com/sun/jna/Platform.java	2014-06-10 23:58:00.977841866 +0200
++++ libjna-java/src/com/sun/jna/Platform.java	2014-06-11 00:10:54.504116837 +0200
+@@ -76,6 +76,12 @@
+         else if (osName.equalsIgnoreCase("gnu/kfreebsd")) {
+             osType = KFREEBSD;
          }
 +        else if (osName.equalsIgnoreCase("gnu")) {
 +            osType = GNU;
@@ -39,9 +17,9 @@ Index: libjna-java/src/com/sun/jna/Platform.java
          else {
              osType = UNSPECIFIED;
          }
-@@ -112,6 +120,11 @@
-     public static final boolean isOpenBSD() {
-         return osType == OPENBSD;
+@@ -139,6 +145,11 @@
+     public static final boolean iskFreeBSD() {
+         return osType == KFREEBSD;
      }
 +    public static final boolean isGNU() {
 +        return osType == GNU;
@@ -51,9 +29,9 @@ Index: libjna-java/src/com/sun/jna/Platform.java
      public static final boolean isX11() {
          // TODO: check filesystem for /usr/X11 or some other X11-specific test
          return !Platform.isWindows() && !Platform.isMac();
-@@ -173,4 +186,19 @@
-             return false;
-         }
+@@ -195,4 +206,19 @@
+             System.getProperty("os.arch").toLowerCase().trim();
+         return arch.startsWith("arm");
      }
 +
 +    public static final String getBaseArch() {
@@ -71,55 +49,3 @@ Index: libjna-java/src/com/sun/jna/Platform.java
 +    }
 +
  }
-Index: libjna-java/src/com/sun/jna/NativeLibrary.java
-===================================================================
---- libjna-java.orig/src/com/sun/jna/NativeLibrary.java	2014-06-10 23:48:10.869260514 +0200
-+++ libjna-java/src/com/sun/jna/NativeLibrary.java	2014-06-10 23:48:36.384939739 +0200
-@@ -645,7 +645,8 @@
-             // on 64bit machines, so we have to explicitly search the 64bit
-             // one when running a 64bit JVM.
-             //
--            if (Platform.isLinux() || Platform.isSolaris() || Platform.isFreeBSD()) {
-+            if (Platform.isLinux() || Platform.isSolaris() || Platform.isFreeBSD()
-+                || Platform.iskFreeBSD()) {
-                 // Linux & FreeBSD use /usr/lib32, solaris uses /usr/lib/32
-                 archPath = (Platform.isSolaris() ? "/" : "") + Pointer.SIZE * 8;
-             }
-@@ -660,23 +661,27 @@
-             // paths is scanned against real directory
-             // so for platforms which are not multi-arch
-             // this should continue to work.
--            if (Platform.isLinux()) {
-+            if (Platform.isLinux() || Platform.iskFreeBSD() || Platform.isGNU()) {
-                 // Defaults - overridden below
--                String cpu = "";
-+                String cpu = Platform.getBaseArch();
-                 String kernel = "linux";
-                 String libc = "gnu";
- 
--                if (Platform.isIntel()) {
--                    cpu = (Platform.is64Bit() ? "x86_64" : "i386");
--                } else if (Platform.isPPC()) {
--                    cpu = (Platform.is64Bit() ? "powerpc64" : "powerpc");
--                } else if (Platform.isARM()) {
--                    cpu = "arm";
-+                if (Platform.isARM()) {
-                     libc = "gnueabi";
-                 }
- 
--                String multiArchPath =
--                    cpu + "-" + kernel + "-" + libc;
-+                if (Platform.iskFreeBSD()) {
-+                    kernel = "kfreebsd";
-+                }
-+
-+                String multiArchPath;
-+
-+                if (Platform.isGNU()) {
-+                    multiArchPath = cpu + "-" + libc;
-+                } else {
-+                    multiArchPath = cpu + "-" + kernel + "-" + libc;
-+                }
- 
-                 // Assemble path with all possible options
-                 paths = new String[] {
