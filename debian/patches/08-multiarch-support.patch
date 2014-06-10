@@ -1,7 +1,9 @@
 Support all Debian multi-arch directories in library lookups.
 
---- a/build.xml
-+++ b/build.xml
+Index: libjna-java/build.xml
+===================================================================
+--- libjna-java.orig/build.xml	2014-06-10 23:48:33.808972123 +0200
++++ libjna-java/build.xml	2014-06-10 23:48:36.384939739 +0200
 @@ -210,6 +210,8 @@
      <echo>java.home=${java.home}</echo>
      <echo>java.library.path=${java.library.path}</echo>
@@ -11,8 +13,10 @@ Support all Debian multi-arch directories in library lookups.
  
    </target>
  
---- a/src/com/sun/jna/Platform.java
-+++ b/src/com/sun/jna/Platform.java
+Index: libjna-java/src/com/sun/jna/Platform.java
+===================================================================
+--- libjna-java.orig/src/com/sun/jna/Platform.java	2014-06-10 23:48:10.917259911 +0200
++++ libjna-java/src/com/sun/jna/Platform.java	2014-06-10 23:48:36.384939739 +0200
 @@ -20,6 +20,8 @@
      public static final int OPENBSD = 5;
      public static final int WINDOWSCE = 6;
@@ -67,8 +71,10 @@ Support all Debian multi-arch directories in library lookups.
 +    }
 +
  }
---- a/src/com/sun/jna/NativeLibrary.java
-+++ b/src/com/sun/jna/NativeLibrary.java
+Index: libjna-java/src/com/sun/jna/NativeLibrary.java
+===================================================================
+--- libjna-java.orig/src/com/sun/jna/NativeLibrary.java	2014-06-10 23:48:10.869260514 +0200
++++ libjna-java/src/com/sun/jna/NativeLibrary.java	2014-06-10 23:48:36.384939739 +0200
 @@ -645,7 +645,8 @@
              // on 64bit machines, so we have to explicitly search the 64bit
              // one when running a 64bit JVM.

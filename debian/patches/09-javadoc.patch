@@ -1,7 +1,9 @@
 Link javadoc to the default-jdk javadoc.
 
---- a/build.xml
-+++ b/build.xml
+Index: libjna-java/build.xml
+===================================================================
+--- libjna-java.orig/build.xml	2014-06-10 23:48:36.384939739 +0200
++++ libjna-java/build.xml	2014-06-10 23:48:39.128905243 +0200
 @@ -686,7 +686,7 @@
        <doctitle>JNA API Documentation</doctitle>
        <header>${header}</header>

@@ -1,8 +1,10 @@
 Author: Yulia Novozhilova <Yulia.Novozhilova@sun.com>
 Description: dynlink and cflags
 
---- a/build.xml
-+++ b/build.xml
+Index: libjna-java/build.xml
+===================================================================
+--- libjna-java.orig/build.xml	2014-06-10 23:48:13.077232756 +0200
++++ libjna-java/build.xml	2014-06-10 23:48:19.029157930 +0200
 @@ -487,6 +487,19 @@
        <arg value="JNA_JNI_VERSION=${jni.version}"/>
        <arg value="CHECKSUM=${jni.md5}"/>
