@@ -11,6 +11,7 @@ override_dh_auto_clean:
 	rm -rf build doc
 	rm -rf contrib/platform/build
 	rm -f dist/platforms-sources.jar
+	rm -f dist/platform-${VERSION}-sources.jar
 	mh_clean
 	dh_clean
 
