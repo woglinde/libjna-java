@@ -8,3 +8,4 @@
 #08-multiarch-support.patch
 09-javadoc.patch
 10-maven-ant-task.patch
+revert-to-old-build-goals.patch
